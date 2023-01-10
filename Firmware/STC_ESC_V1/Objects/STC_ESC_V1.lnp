@@ -1,0 +1,4 @@
+".\Objects\STARTUP.obj",
+".\Objects\main.obj" 
+TO ".\Objects\STC_ESC_V1" 
+PRINT(".\Listings\STC_ESC_V1.m51") RAMSIZE(256) 
