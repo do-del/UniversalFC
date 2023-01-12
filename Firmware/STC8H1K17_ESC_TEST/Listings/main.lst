@@ -1,10 +1,10 @@
-C51 COMPILER V9.60.0.0   MAIN                                                              01/12/2023 17:00:20 PAGE 1   
+C51 COMPILER V9.60.0.0   MAIN                                                              01/12/2023 21:43:13 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE MAIN
 OBJECT MODULE PLACED IN .\Objects\main.obj
-COMPILER INVOKED BY: C:\Keil_c51\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\mai
-                    -n.lst) TABS(2) OBJECT(.\Objects\main.obj)
+COMPILER INVOKED BY: D:\Keil51\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main.
+                    -lst) TABS(2) OBJECT(.\Objects\main.obj)
 
 line level    source
 
@@ -24,102 +24,234 @@ line level    source
   14           * CMP-（P3.6），配置为高阻输入，接过零检测电路中点
   15          */
   16          
-  17          typedef unsigned char u8;
-  18          typedef unsigned int u16;
-  19          typedef unsigned long u32;
-  20          
-  21          #define PWM1    P10
-  22          #define PWM1_L  P11
-  23          #define PWM2    P12
-  24          #define PWM2_L  P13
-  25          #define PWM3    P14
-  26          #define PWM3_L  P15
-  27          
-  28          void Port_Init(void); //芯片复位后引脚初始化
-  29          void PWMA_Config(void); //PWMA配置函数
-  30          void ADC_Config(void);
-  31          void CMP_Config(void);
-  32          void Timer0_Config(void);
-  33          void Timer3_Config(void);
-  34          void Timer4_Config(void);
-  35          
-  36          void main(void)
-  37          {
-  38   1        P_SW2 |= 0x80; //使能XFR
-  39   1        
-  40   1        Port_Init();
-  41   1        PWMA_Config();
-  42   1        ADC_Config();
-  43   1        CMP_Config();
-  44   1        Timer0_Config();
-  45   1        Timer3_Config();
-  46   1        Timer4_Config();
-  47   1      }
-  48          
-  49          void Port_Init(void)
-  50          {
-  51   1        P0M0 = 0x00;
-  52   1        P0M1 = 0x00; //P0端口初始化为双向口
-  53   1        P1M0 = 0x00;
-  54   1        P1M1 = 0x00; //P1端口初始化为双向口
-C51 COMPILER V9.60.0.0   MAIN                                                              01/12/2023 17:00:20 PAGE 2   
+  17          /*
+  18           * 无刷电机通电次序
+  19           * AB-AC-BC-BA-CA-CB-AB
+  20           * 相对应感应电动势变化
+  21           * C下降-B上升-A下降-C上升-B下降-A上升-C下降
+  22          */
+  23          
+  24          #define FOSC 24000000UL //系统时钟
+  25          #define BRT (65536-(FOSC/115200+2)/4) //波特率转计数值
+  26          
+  27          typedef unsigned char u8;
+  28          typedef unsigned int u16;
+  29          typedef unsigned long u32;
+  30          
+  31          #define PWM1    P10
+  32          #define PWM1_L  P11
+  33          #define PWM2    P12
+  34          #define PWM2_L  P13
+  35          #define PWM3    P14
+  36          #define PWM3_L  P15
+  37          
+  38          #define RX_LEN 16
+  39          bit busy;   //串口发送完成标志
+  40          char wptr;  //串口接收数据长度
+  41          char buffer[RX_LEN]; //串口接收数据缓存
+  42          
+  43          void Port_Init(void); //芯片复位后引脚初始化
+  44          void PWMA_Config(void); //PWMA配置函数
+  45          void ADC_Config(void);
+  46          void CMP_Config(void);
+  47          void Timer0_Config(void);
+  48          void Timer3_Config(void);
+  49          void Timer4_Config(void);
+  50          
+  51          //调试用函数
+  52          void Uart_Config(void); //串口初始化
+  53          void UartSend(char dat); //串口发生字节
+  54          void UartSendStr(char *p); //串口发送字符串
+C51 COMPILER V9.60.0.0   MAIN                                                              01/12/2023 21:43:13 PAGE 2   
 
-  55   1        P2M0 = 0x00;
-  56   1        P2M1 = 0x00; //P2端口初始化为双向口
-  57   1        P3M0 = 0x00;
-  58   1        P3M1 = 0x00; //P3端口初始化为双向口
-  59   1        P5M0 = 0x00;
-  60   1        P5M0 = 0x00; //P5端口初始化为双向口
-  61   1      }
-  62          
-  63          void PWMA_Config(void)
-  64          {
-  65   1        //先将MOS管选通信号拉低，防止误导通
-  66   1        PWM1 = 0;
-  67   1        PWM1_L = 0;
-  68   1        PWM2 = 0;
-  69   1        PWM2_L = 0;
-  70   1        PWM3 = 0;
-  71   1        PWM3_L = 0;
-  72   1        
-  73   1        //配置选通引脚为推挽输出
-  74   1        P1M0 |= 0x3f; //0x3f = 0B0011 1111，bit0~bit5置1
-  75   1        P1M1 &= ~0x3f; //~0x3f = 0B1100 0000,bit0~bit5置0
-  76   1        
-  77   1        PWMA_PSCR = 3;  //PWMA_PSCR为PWMA的16位预分频器寄存器，可以16位数据读写，f_ck_int = f_ck_psc/(PSCR[15:0]+1
-             -)
-  78   1        PWMA_DTR = 24;  //PWMA_DTR位PWMA的死区寄存器，设置死区持续时间，本程序死区互补功能未开
-  79   1        
-  80   1        PWMA_ARR = 255; //PWMA_ARR为PWMA的16位自动重载寄存器
-  81   1        PWMA_CCER1 = 0; //捕获/比较使能寄存器1，配置极性及输出使能
-  82   1        PWMA_CCER2 = 0; //捕获/比较使能寄存器2，配置极性及输出使能
-  83   1        PWMA_SR1 = 0;   //状态寄存器1，中断标记
-  84   1        PWMA_SR2 = 0;   //状态寄存器2，重复捕获标记
-  85   1        PWMA_ENO = 0;   //输出使能寄存器
-  86   1        PWMA_PS = 0;    //功能脚切换
-  87   1        PWMA_IER = 0;   //中断使能寄存器
+  55          
+  56          void UartIsr() interrupt 4
+  57          {
+  58   1        if(TI)
+  59   1        {
+  60   2          TI = 0;
+  61   2          busy = 0;
+  62   2        }
+  63   1        if(RI)
+  64   1        {
+  65   2          RI = 0;
+  66   2          buffer[wptr++] = SBUF;
+  67   2          if(SBUF == '\n')
+  68   2            wptr |= 0x80;
+  69   2        }
+  70   1      }
+  71          
+  72          void UartRxTest(void)
+  73          {
+  74   1        if(wptr & 0x80)
+  75   1        {
+  76   2          unsigned char len = wptr & 0x7f;
+  77   2          u8 i;
+  78   2          UartSendStr(buffer);
+  79   2          for(i = 0;i<len;i++)
+  80   2            buffer[i] = 0;
+  81   2          wptr = 0;
+  82   2        }
+  83   1      }
+  84          
+  85          void main(void)
+  86          {
+  87   1        P_SW2 |= 0x80; //使能XFR
   88   1        
-  89   1        PWMA_CCMR1 = 0x68;  //捕获/比较模式寄存器1，0x68 = 0b0110 1000配置为输出，开启预装载，PWM模式1
-  90   1        PWMA_CCR1 = 0;      //捕获/比较寄存器，16位，当前比较值
-  91   1        PWMA_CCER1 |= 0x05; //0x05 = 0b0000 0101
-  92   1        PWMA_PS |= 0;
-  93   1      }
-  94          
-  95          void ADC_Config(void);
-  96          void CMP_Config(void);
-  97          void Timer0_Config(void);
-  98          void Timer3_Config(void);
-  99          void Timer4_Config(void);
+  89   1        Port_Init();
+  90   1        PWMA_Config();
+  91   1        ADC_Config();
+  92   1        CMP_Config();
+  93   1        Timer0_Config();
+  94   1        Timer3_Config();
+  95   1        Timer4_Config();
+  96   1        
+  97   1        Uart_Config();
+  98   1        ES = 1;
+  99   1        EA = 1;
+ 100   1        
+ 101   1        UartSendStr("--Brushless ESC Test--\r\n");
+ 102   1        
+ 103   1        PWMA_ENO = 0x15; //0x15 = 0b0001 0101
+ 104   1        
+ 105   1        while(1)
+ 106   1        {
+ 107   2          UartRxTest();
+ 108   2        }
+ 109   1      }
+ 110          
+ 111          void Port_Init(void)
+ 112          {
+ 113   1        P0M0 = 0x00;
+ 114   1        P0M1 = 0x00; //P0端口初始化为双向口
+ 115   1        P1M0 = 0x00;
+ 116   1        P1M1 = 0x00; //P1端口初始化为双向口
+C51 COMPILER V9.60.0.0   MAIN                                                              01/12/2023 21:43:13 PAGE 3   
+
+ 117   1        P2M0 = 0x00;
+ 118   1        P2M1 = 0x00; //P2端口初始化为双向口
+ 119   1        P3M0 = 0x00;
+ 120   1        P3M1 = 0x00; //P3端口初始化为双向口
+ 121   1        P5M0 = 0x00;
+ 122   1        P5M0 = 0x00; //P5端口初始化为双向口
+ 123   1      }
+ 124          
+ 125          void PWMA_Config(void)
+ 126          {
+ 127   1        //先将MOS管选通信号拉低，防止误导通
+ 128   1        PWM1 = 0;
+ 129   1        PWM1_L = 0;
+ 130   1        PWM2 = 0;
+ 131   1        PWM2_L = 0;
+ 132   1        PWM3 = 0;
+ 133   1        PWM3_L = 0;
+ 134   1        
+ 135   1        //配置选通引脚为推挽输出，M0相应bit为1，M1相应bit为0
+ 136   1        P1M0 |= 0x3f; //0x3f = 0B0011 1111，bit0~bit5置1
+ 137   1        P1M1 &= ~0x3f; //~0x3f = 0B1100 0000,bit0~bit5置0
+ 138   1        
+ 139   1        PWMA_PSCR = 3;  //PWMA_PSCR为PWMA的16位预分频器寄存器，可以16位数据读写，f_ck_int = f_ck_psc/(PSCR[15:0]+1
+             -)
+ 140   1        PWMA_DTR = 24;  //PWMA_DTR位PWMA的死区寄存器，设置死区持续时间，本程序死区互补功能未开
+ 141   1        
+ 142   1        PWMA_ARR = 255; //PWMA_ARR为PWMA的16位自动重载寄存器
+ 143   1        PWMA_CCER1 = 0; //捕获/比较使能寄存器1，配置极性及输出使能
+ 144   1        PWMA_CCER2 = 0; //捕获/比较使能寄存器2，配置极性及输出使能
+ 145   1        PWMA_SR1 = 0;   //状态寄存器1，中断标记
+ 146   1        PWMA_SR2 = 0;   //状态寄存器2，重复捕获标记
+ 147   1        PWMA_ENO = 0;   //输出使能寄存器
+ 148   1        PWMA_PS = 0;    //功能脚切换
+ 149   1        PWMA_IER = 0;   //中断使能寄存器
+ 150   1        
+ 151   1        PWMA_CCMR1 = 0x68;  //捕获/比较模式寄存器1，0x68 = 0b0110 1000配置为输出，开启预装载，PWM模式1
+ 152   1        PWMA_CCR1 = 127;      //捕获/比较寄存器，16位，当前比较值
+ 153   1        PWMA_CCER1 |= 0x05; //捕获/比较使能寄存器1，0x05 = 0b0000 0101
+ 154   1        PWMA_PS |= 0;       //PWMA IO选择
+ 155   1        
+ 156   1        PWMA_CCMR2 = 0x68;  //捕获/比较模式寄存器2，0x68 = 0b0110 1000配置为输出，开启预装载，PWM模式1
+ 157   1        PWMA_CCR2 = 63;     //捕获/比较寄存器，16位，当前比较值，与PWMA_ARR比较
+ 158   1        PWMA_CCER1 |= 0x50; //捕获/比较使能寄存器1，0x05 = 0b0101 0000
+ 159   1        PWMA_PS |= (0<<2);  //PWMA IO选择
+ 160   1        
+ 161   1        PWMA_CCMR3 = 0x68;  //捕获/比较模式寄存器3，0x68 = 0b0110 1000配置为输出，开启预装载，PWM模式1
+ 162   1        PWMA_CCR3 = 191;      //捕获/比较寄存器，16位，当前比较值
+ 163   1        PWMA_CCER2 |= 0x05; //捕获/比较使能寄存器2，0x05 = 0b0000 0101
+ 164   1        PWMA_PS |= (0<<4);  //PWMA IO选择
+ 165   1        
+ 166   1        PWMA_BKR = 0x80;  //使能OC和OCN输出
+ 167   1        PWMA_CR1 = 0x81;  //控制寄存器1，使能自动预装载，边沿对齐，向上计数，使能计数器
+ 168   1        PWMA_EGR = 0x01;  //初始化计数器
+ 169   1      }
+ 170          
+ 171          void ADC_Config(void)
+ 172          {
+ 173   1        //设置引脚模式为高阻输入，M1相应bit为1，M0相应bit为0
+ 174   1        P1M1 |= 0xc0; //标志位置1
+ 175   1        P1M0 &= ~0xc0; //标志位清0
+ 176   1        
+ 177   1        //设置引脚模式为高阻输入，M1相应bit为1，M0相应bit为0
+C51 COMPILER V9.60.0.0   MAIN                                                              01/12/2023 21:43:13 PAGE 4   
+
+ 178   1        P0M1 |= 0x0f;  //标志位置1
+ 179   1        P0M0 &= ~0x0f; //标志位清0
+ 180   1        
+ 181   1      }
+ 182          
+ 183          void CMP_Config(void)
+ 184          {
+ 185   1        
+ 186   1      }
+ 187          
+ 188          void Timer0_Config(void)
+ 189          {
+ 190   1        
+ 191   1      }
+ 192          
+ 193          void Timer3_Config(void)
+ 194          {
+ 195   1        
+ 196   1      }
+ 197          
+ 198          void Timer4_Config(void)
+ 199          {
+ 200   1        
+ 201   1      }
+ 202          
+ 203          void Uart_Config(void)
+ 204          {
+ 205   1        SCON = 0x50;
+ 206   1        T2L = BRT;
+ 207   1        T2H = BRT>>8;
+ 208   1        AUXR = 0x15;
+ 209   1        wptr = 0;
+ 210   1        busy = 0;
+ 211   1      }
+ 212          
+ 213          void UartSend(char dat)
+ 214          {
+ 215   1        while(busy);
+ 216   1        busy = 1;
+ 217   1        SBUF = dat;
+ 218   1      }
+ 219          
+ 220          void UartSendStr(char *p)
+ 221          {
+ 222   1        while(*p)
+ 223   1        {
+ 224   2          UartSend(*p++);
+ 225   2        }
+ 226   1      }
+ 227          
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =    137    ----
-   CONSTANT SIZE    =   ----    ----
+   CODE SIZE        =    410    ----
+   CONSTANT SIZE    =     25    ----
    XDATA SIZE       =   ----    ----
    PDATA SIZE       =   ----    ----
-   DATA SIZE        =   ----    ----
+   DATA SIZE        =     17       5
    IDATA SIZE       =   ----    ----
-   BIT SIZE         =   ----    ----
+   BIT SIZE         =      1    ----
 END OF MODULE INFORMATION.
 
 
