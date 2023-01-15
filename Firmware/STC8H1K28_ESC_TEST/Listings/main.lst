@@ -1,0 +1,683 @@
+C51 COMPILER V9.60.0.0   MAIN                                                              01/14/2023 20:28:46 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\Keil51\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main.
+                    -lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include "stc8h.h"
+   2          #include <intrins.h>
+   3          
+   4          /*
+   5           * PWM1½ÓP1.0£¬ÅäÖÃÍÆÍìÊä³öºÍPWMÊä³ö£¬¿ØÖÆµç»úUÏà¸ßÎ»MOS¹ÜÑ¡Í¨ÐÅºÅ£¬¸ßµçÆ½µ¼Í¨£¬µÍµçÆ½½ØÖ¹
+   6           * PWM1_L½ÓP1.1£¬ÅäÖÃÍÆÍìÊä³ö£¬¿ØÖÆµç»úUÏàµÍÎ»MOS¹ÜÑ¡Í¨ÐÅºÅ£¬¸ßµçÆ½µ¼Í¨£¬µÍµçÆ½½ØÖ¹
+   7           * PWM2½ÓP1.2£¬ÅäÖÃÍÆÍìÊä³öºÍPWMÊä³ö£¬¿ØÖÆµç»úVÏà¸ßÎ»MOS¹ÜÑ¡Í¨ÐÅºÅ£¬¸ßµçÆ½µ¼Í¨£¬µÍµçÆ½½ØÖ¹
+   8           * PWM2_L½ÓP1.3£¬ÅäÖÃÍÆÍìÊä³ö£¬¿ØÖÆµç»úVÏàµÍÎ»MOS¹ÜÑ¡Í¨ÐÅºÅ£¬¸ßµçÆ½µ¼Í¨£¬µÍµçÆ½½ØÖ¹
+   9           * PWM3½ÓP1.4£¬ÅäÖÃÍÆÍìÊä³öºÍPWMÊä³ö£¬¿ØÖÆµç»úWÏà¸ßÎ»MOS¹ÜÑ¡Í¨ÐÅºÅ£¬¸ßµçÆ½µ¼Í¨£¬µÍµçÆ½½ØÖ¹
+  10           * PWM3_L½ÓP1.5£¬ÅäÖÃÍÆÍìÊä³ö£¬¿ØÖÆµç»úWÏàµÍÎ»MOS¹ÜÑ¡Í¨ÐÅºÅ£¬¸ßµçÆ½µ¼Í¨£¬µÍµçÆ½½ØÖ¹
+  11           * ADC8£¨P0.0£©£¬ÅäÖÃ¸ß×èÊäÈë£¬²ÉÑùµç»úUÏà¸ÐÓ¦µç¶¯ÊÆ£¬ÓÃÓÚ¹ýÁã¼ì²â±È½ÏÆ÷ÕýÊäÈë
+  12           * ADC9£¨P0.1£©£¬ÅäÖÃ¸ß×èÊäÈë£¬²ÉÑùµç»úVÏà¸ÐÓ¦µç¶¯ÊÆ
+  13           * ADC10£¨P0.2£©£¬ÅäÖÃ¸ß×èÊäÈë£¬²ÉÑùµç»úWÏà¸ÐÓ¦µç¶¯ÊÆ
+  14           * CMP-£¨P3.6£©£¬ÅäÖÃÎª¸ß×èÊäÈë£¬½Ó¹ýÁã¼ì²âµçÂ·ÖÐµã
+  15          */
+  16          
+  17          /*
+  18           * ÎÞË¢µç»úÍ¨µç´ÎÐò
+  19           * AB-AC-BC-BA-CA-CB-AB
+  20           * Ïà¶ÔÓ¦¸ÐÓ¦µç¶¯ÊÆ±ä»¯
+  21           * CÏÂ½µ-BÉÏÉý-AÏÂ½µ-CÉÏÉý-BÏÂ½µ-AÉÏÉý-CÏÂ½µ
+  22          */
+  23          
+  24          #define FOSC 24000000UL //ÏµÍ³Ê±ÖÓ
+  25          #define BRT (65536-(FOSC/115200+2)/4) //²¨ÌØÂÊ×ª¼ÆÊýÖµ
+  26          
+  27          typedef unsigned char u8;
+  28          typedef unsigned int u16;
+  29          typedef unsigned long u32;
+  30          
+  31          #define PWM1    P10
+  32          #define PWM1_L  P11
+  33          #define PWM2    P12
+  34          #define PWM2_L  P13
+  35          #define PWM3    P14
+  36          #define PWM3_L  P15
+  37          
+  38          #define ADC_START (1<<6)  //AD´Ó¿ØÖÆ¼Ä´æÆ÷bit6£¬ADC×ª»»Æô¶¯¿ØÖÆÎ»£¬Ð´1¿ªÊ¼ADC×ª»»
+  39          #define ADC_FLAG (1<<5) //ADC¿ØÖÆ¼Ä´æÆ÷bit5£¬ADC×ª»»½áÊø±êÖ¾Î»
+  40          #define ADC_SPEED 1     //ADCÅäÖÃ¼Ä´æÆ÷bit3~bit0£¬ÉèÖÃADC¹¤×÷Ê±ÖÓÆµÂÊ
+  41          #define RES_FMT (1<<5)  //ADCÅäÖÃ¼Ä´æÆ÷bit5£¬ÖÃ1ÅäÖÃADC½á¹ûÓÒ¶ÔÆë£¬ÖÃ0ÅäÖÃADC½á¹û×ó¶ÔÆë
+  42          #define CSSETUP (0<<7)  //ADCTIMÊ±Ðò¿ØÖÆ¼Ä´æÆ÷Í¨µÀÑ¡ÔñÊ±¼ä¿ØÖÆÎ»bit7£¬Õ¼ÓÃÒ»¸öÊ±ÖÓÊý
+  43          #define CSHOLD (1<<5)   //ADCTIMÊ±Ðò¿ØÖÆ¼Ä´æÆ÷Í¨µÀ±£³ÖÊ±¼ä¿ØÖÆÎ»bit6~bit5£¬Õ¼ÓÃ2¸öÊ±ÖÓÊý
+  44          #define SMPDUTY 20      //ADCTIMÊ±Ðò¿ØÖÆ¼Ä´æÆ÷Í¨µÀ²ÉÑùÊ±¼ä¿ØÖÆÎ»bit4~bit0£¬Õ¼ÓÃ21¸öÊ±ÖÓÊý£¬²»µÃÐ¡ÓÚ10
+  45          
+  46          #define RX_LEN 16 //´®¿Ú½ÓÊÕÊý¾Ý»º´æ³¤¶È
+  47          bit busy;   //´®¿Ú·¢ËÍÍê³É±êÖ¾
+  48          char wptr;  //´®¿Ú½ÓÊÕÊý¾Ý³¤¶È
+  49          char buffer[RX_LEN]; //´®¿Ú½ÓÊÕÊý¾Ý»º´æ
+  50          
+  51          void Port_Init(void); //Ð¾Æ¬¸´Î»ºóÒý½Å³õÊ¼»¯
+  52          void PWMA_Config(void); //PWMAÅäÖÃº¯Êý
+  53          void ADC_Config(void);  //ADCÅäÖÃº¯Êý
+  54          void CMP_Config(void);  //±È½ÏÆ÷ÅäÖÃº¯Êý
+C51 COMPILER V9.60.0.0   MAIN                                                              01/14/2023 20:28:46 PAGE 2   
+
+  55          void Timer0_Config(void); //¶¨Ê±Æ÷0ÅäÖÃº¯Êý£¬º¯ÊýÖÐÒÑ¿ªÆô¶¨Ê±Æ÷0¼°ÆäÖÐ¶Ï£¨4msÒ»´Î£©
+  56          void Timer3_Config(void); //¶¨Ê±Æ÷3ÅäÖÃº¯Êý
+  57          void Timer4_Config(void); //¶¨Ê±Æ÷4ÅäÖÃº¯Êý
+  58          
+  59          #define delay_200ns() do{_nop_();_nop_();_nop_();_nop_();}while(0) //¸ù¾ÝMOS¹ÜÊÖ²áµ÷ÕûËÀÇøÊ±¼ä£¬ÏÖ²ÉÓÃµÄMO
+             -S¹Üµ¼Í¨¹Ø¶ÏÊ±¼ä×î´óÎª55ns£¬´Ë´¦µ÷ÕûÎª200nsÑÓÊ±
+  60          #define delay_dead() delay_200ns()
+  61          u16 Get_ADCRes(u8 ch);  //»ñÈ¡ADCÖ¸¶¨Í¨µÀ²ÉÑù½á¹û
+  62          void Motor_Start(void); //µç»úÆô¶¯º¯Êý
+  63          void Motor_Step(void); //µç»ú»»Ïàº¯Êý
+  64          
+  65          void  Delay_n_ms(u8 dly)  // N msÑÓÊ±º¯Êý
+  66          {
+  67   1        u16 j;
+  68   1        do
+  69   1        {
+  70   2          j = FOSC / 10000;
+  71   2          while(--j)  ;
+  72   2        }while(--dly);
+  73   1      }
+  74          
+  75          void delay_us(u8 us)  //N usÑÓÊ±º¯Êý
+  76          {
+  77   1        do
+  78   1        {
+  79   2          _nop_();
+  80   2          _nop_();
+  81   2          _nop_();
+  82   2          _nop_();
+  83   2          _nop_();
+  84   2          _nop_();
+  85   2          _nop_();
+  86   2          _nop_();
+  87   2          _nop_();
+  88   2          _nop_();
+  89   2          _nop_();
+  90   2          _nop_();
+  91   2          _nop_();
+  92   2          _nop_();
+  93   2          _nop_();
+  94   2          _nop_();
+  95   2          _nop_();
+  96   2          _nop_();
+  97   2          _nop_();
+  98   2          _nop_();  //@24MHz
+  99   2        }
+ 100   1        while(--us);
+ 101   1      }
+ 102          
+ 103          //µ÷ÊÔÓÃº¯Êý
+ 104          void Uart_Config(void); //´®¿Ú³õÊ¼»¯
+ 105          void UartSend(char dat); //´®¿Ú·¢Éú×Ö½Ú
+ 106          void UartSendStr(char *p); //´®¿Ú·¢ËÍ×Ö·û´®
+ 107          void UartSendNum(int num); //´®¿Ú·¢ËÍ-32767~32768·¶Î§ÄÚµÄÊý×Ö
+ 108          
+ 109          u8 step; //µç»ú¸÷ÏàÍ¨µçÐòºÅ£¬Áù²½»»Ïà£¬·¶Î§0~5
+ 110          bit m_starting; //µç»úÕýÔÚÆô¶¯±êÖ¾
+ 111          bit m_running;  //µç»úÕýÔÚÔËÐÐ±êÖ¾
+ 112          u8 demagnetizing_cnt; //Ïû´Å¼ÆÊýÖµ£¬1ÎªÐèÒªÏû´Å£¬2ÎªÕýÔÚÏû´Å£¬0ÎªÒÑ¾­Ïû´Å£¬³õÊ¼»¯Îª0£¬µç»úÔËÐÐºó±È½ÏÆ÷ÖÐ¶Ï
+             -¼ì²â¹ýÁãÊÂ¼þºóÖÃ1£¨ÆÚ¼äÉèÖÃ»»ÏàÊ±¼ä£©£¬ÔÚ¶¨Ê±Æ÷4ÖÐ¶Ï»»Ïàºó½øÐÐÏû´Å
+ 113          bit t3_flag; //Timer3Òç³ö±êÖ¾£¬32.768msÖÃ1Ò»´Î
+ 114          bit t0_flag; //Timer0Òç³ö±êÖ¾£¬4msÖÃ1Ò»´Î
+C51 COMPILER V9.60.0.0   MAIN                                                              01/14/2023 20:28:46 PAGE 3   
+
+ 115          #define TMP_LEN 8
+ 116          u8 time_index;
+ 117          u16 phase_time_tmp[TMP_LEN];
+ 118          u8 timeout;
+ 119          u8  PWM_Value;  // ¾ö¶¨PWMÕ¼¿Õ±ÈµÄÖµ
+ 120          u8  PWM_Set;  //Ä¿±êPWMÉèÖÃ
+ 121          #define D_START_PWM   30
+ 122          
+ 123          //µ÷ÊÔÓÃ²ÎÊý
+ 124          bit cmp_it_flag;
+ 125          u16 debug_phase_time;
+ 126          bit t4_it_flag1;
+ 127          bit t4_it_flag2;
+ 128          
+ 129          void UartIsr() interrupt 4
+ 130          {
+ 131   1        if(TI)
+ 132   1        {
+ 133   2          TI = 0;
+ 134   2          busy = 0;
+ 135   2        }
+ 136   1        if(RI)
+ 137   1        {
+ 138   2          RI = 0;
+ 139   2          buffer[wptr++] = SBUF;
+ 140   2          if(SBUF == '\n')
+ 141   2            wptr |= 0x80;
+ 142   2        }
+ 143   1      }
+ 144          
+ 145          void UartRxTest(void)
+ 146          {
+ 147   1        if(wptr & 0x80)
+ 148   1        {
+ 149   2          unsigned char len = wptr & 0x7f;
+ 150   2          u8 i;
+ 151   2          UartSendStr(buffer);
+ 152   2          for(i = 0;i<len;i++)
+ 153   2            buffer[i] = 0;
+ 154   2          wptr = 0;
+ 155   2        }
+ 156   1      }
+ 157          
+ 158          void main(void)
+ 159          {
+ 160   1        u8  i;
+ 161   1        u16 j;
+ 162   1        
+ 163   1        P_SW2 |= 0x80; //Ê¹ÄÜXFR
+ 164   1        
+ 165   1        Port_Init();  //µ÷ÓÃ¶Ë¿Ú³õÊ¼»¯º¯Êý
+ 166   1        PWMA_Config();  //µ÷ÓÃPWMA³õÊ¼»¯º¯Êý
+ 167   1        ADC_Config(); //µ÷ÓÃADC³õÊ¼»¯º¯Êý
+ 168   1        CMP_Config(); //µ÷ÓÃÄ£Äâ±È½ÏÆ÷³õÊ¼»¯º¯Êý
+ 169   1        Timer0_Config();  //µ÷ÓÃ¶¨Ê±Æ÷0³õÊ¼»¯º¯Êý
+ 170   1        Timer3_Config();  //µ÷ÓÃ¶¨Ê±Æ÷3³õÊ¼»¯º¯Êý
+ 171   1        Timer4_Config();  //µ÷ÓÃ¶¨Ê±Æ÷4³õÊ¼»¯º¯Êý
+ 172   1        
+ 173   1        Uart_Config();  //µ÷ÓÃ´®¿Ú³õÊ¼»¯º¯Êý
+ 174   1        ES = 1;
+ 175   1        
+ 176   1        PWM_Set = 100;
+C51 COMPILER V9.60.0.0   MAIN                                                              01/14/2023 20:28:46 PAGE 4   
+
+ 177   1        timeout = 0;
+ 178   1        
+ 179   1        EA = 1; //´ò¿ª×ÜÖÐ¶Ï
+ 180   1        
+ 181   1        UartSendStr("--Brushless ESC Test--\r\n");
+ 182   1        
+ 183   1        //PWMA_ENO = 0x15; //0x15 = 0b0001 0101£¬²âÊÔPWMA¹¦ÄÜ£¬Ê¹ÄÜPWM1P£¬PWM2P£¬PWM3PÊä³ö
+ 184   1        
+ 185   1        while(1)
+ 186   1        {
+ 187   2          if(t0_flag)
+ 188   2          {
+ 189   3            t0_flag = 0;
+ 190   3            if(timeout != 0)
+ 191   3            {
+ 192   4              if(--timeout == 0)
+ 193   4              {
+ 194   5                UartSendStr("timeout\r\n");
+ 195   5                m_running = 0;
+ 196   5                PWM_Value = 0;
+ 197   5                CMPCR1 = 0x8c;
+ 198   5                PWMA_ENO = 0;
+ 199   5                PWMA_CCR1 = 0;
+ 200   5                PWMA_CCR2 = 0;
+ 201   5                PWMA_CCR3 = 0;
+ 202   5                PWM1_L = 0;
+ 203   5                PWM2_L = 0;
+ 204   5                PWM3_L = 0;
+ 205   5                Delay_n_ms(250);
+ 206   5              }
+ 207   4            }
+ 208   3            if(!m_running && (PWM_Set >= D_START_PWM))
+ 209   3            {
+ 210   4              UartSendStr("-ST-\r\n");
+ 211   4              m_starting = 1;
+ 212   4              for(i = 0;i<8;i++) phase_time_tmp[i] = 400; 
+ 213   4              Motor_Start();
+ 214   4              m_starting = 0;
+ 215   4              demagnetizing_cnt = 0;
+ 216   4              CMPCR1 &= ~0x40;
+ 217   4              if(step & 1)  CMPCR1 = 0xAC;    //ÉÏÉýÑØÖÐ¶Ï
+ 218   4              else      CMPCR1 = 0x9C;    //ÏÂ½µÑØÖÐ¶Ï
+ 219   4              m_running = 1;
+ 220   4              Delay_n_ms(250);  //ÑÓÊ±Ò»ÏÂ, ÏÈÆô¶¯ÆðÀ´
+ 221   4              Delay_n_ms(250);
+ 222   4              timeout = 125;    //Æô¶¯³¬Ê±Ê±¼ä 125*4 = 500ms
+ 223   4            }
+ 224   3            if(m_running)
+ 225   3            {
+ 226   4              if(PWM_Value < PWM_Set) PWM_Value++;
+ 227   4              if(PWM_Value > PWM_Set) PWM_Value--;
+ 228   4              PWMA_CCR1 = PWM_Value;
+ 229   4              PWMA_CCR2 = PWM_Value;
+ 230   4              PWMA_CCR3 = PWM_Value;
+ 231   4            }
+ 232   3            if(cmp_it_flag)
+ 233   3            {
+ 234   4              cmp_it_flag = 0;
+ 235   4              UartSendStr("-cmp it-\r\n");
+ 236   4              UartSendStr("ph:");
+ 237   4              UartSendNum(debug_phase_time);
+ 238   4              UartSendStr("\r\n");
+C51 COMPILER V9.60.0.0   MAIN                                                              01/14/2023 20:28:46 PAGE 5   
+
+ 239   4            }
+ 240   3            if(t4_it_flag1)
+ 241   3            {
+ 242   4              t4_it_flag1 = 0;
+ 243   4              UartSendStr("-t4 it 1-\r\n");
+ 244   4            }
+ 245   3            if(t4_it_flag2)
+ 246   3            {
+ 247   4              t4_it_flag2 = 0;
+ 248   4              UartSendStr("-t4 it 2-\r\n");
+ 249   4            }
+ 250   3          }
+ 251   2        }
+ 252   1      }
+*** WARNING C280 IN LINE 161 OF main.c: 'j': unreferenced local variable
+ 253          
+ 254          void Port_Init(void)
+ 255          {
+ 256   1        P0M0 = 0x00;
+ 257   1        P0M1 = 0x00; //P0¶Ë¿Ú³õÊ¼»¯ÎªË«Ïò¿Ú
+ 258   1        P1M0 = 0x00;
+ 259   1        P1M1 = 0x00; //P1¶Ë¿Ú³õÊ¼»¯ÎªË«Ïò¿Ú
+ 260   1        P2M0 = 0x00;
+ 261   1        P2M1 = 0x00; //P2¶Ë¿Ú³õÊ¼»¯ÎªË«Ïò¿Ú
+ 262   1        P3M0 = 0x00;
+ 263   1        P3M1 = 0x00; //P3¶Ë¿Ú³õÊ¼»¯ÎªË«Ïò¿Ú
+ 264   1        P5M0 = 0x00;
+ 265   1        P5M0 = 0x00; //P5¶Ë¿Ú³õÊ¼»¯ÎªË«Ïò¿Ú
+ 266   1      }
+ 267          
+ 268          void PWMA_Config(void)
+ 269          {
+ 270   1        //ÏÈ½«MOS¹ÜÑ¡Í¨ÐÅºÅÀ­µÍ£¬·ÀÖ¹Îóµ¼Í¨
+ 271   1        PWM1 = 0;
+ 272   1        PWM1_L = 0;
+ 273   1        PWM2 = 0;
+ 274   1        PWM2_L = 0;
+ 275   1        PWM3 = 0;
+ 276   1        PWM3_L = 0;
+ 277   1        
+ 278   1        //ÅäÖÃÑ¡Í¨Òý½ÅÎªÍÆÍìÊä³ö£¬M0ÏàÓ¦bitÎª1£¬M1ÏàÓ¦bitÎª0
+ 279   1        P1M0 |= 0x3f; //0x3f = 0B0011 1111£¬bit0~bit5ÖÃ1
+ 280   1        P1M1 &= ~0x3f; //~0x3f = 0B1100 0000,bit0~bit5ÖÃ0
+ 281   1        
+ 282   1        PWMA_PSCR = 3;  //PWMA_PSCRÎªPWMAµÄ16Î»Ô¤·ÖÆµÆ÷¼Ä´æÆ÷£¬¿ÉÒÔ16Î»Êý¾Ý¶ÁÐ´£¬f_ck_int = f_ck_psc/(PSCR[15:0]+1
+             -)
+ 283   1        PWMA_DTR = 24;  //PWMA_DTRÎ»PWMAµÄËÀÇø¼Ä´æÆ÷£¬ÉèÖÃËÀÇø³ÖÐøÊ±¼ä£¬±¾³ÌÐòËÀÇø»¥²¹¹¦ÄÜÎ´¿ª
+ 284   1        
+ 285   1        PWMA_ARR = 0xff;  //PWMA_ARRÎªPWMAµÄ16Î»×Ô¶¯ÖØÔØ¼Ä´æÆ÷
+ 286   1        PWMA_CCER1 = 0; //²¶»ñ/±È½ÏÊ¹ÄÜ¼Ä´æÆ÷1£¬ÅäÖÃ¼«ÐÔ¼°Êä³öÊ¹ÄÜ
+ 287   1        PWMA_CCER2 = 0; //²¶»ñ/±È½ÏÊ¹ÄÜ¼Ä´æÆ÷2£¬ÅäÖÃ¼«ÐÔ¼°Êä³öÊ¹ÄÜ
+ 288   1        PWMA_SR1 = 0;   //×´Ì¬¼Ä´æÆ÷1£¬ÖÐ¶Ï±ê¼Ç
+ 289   1        PWMA_SR2 = 0;   //×´Ì¬¼Ä´æÆ÷2£¬ÖØ¸´²¶»ñ±ê¼Ç
+ 290   1        PWMA_ENO = 0;   //Êä³öÊ¹ÄÜ¼Ä´æÆ÷
+ 291   1        PWMA_PS = 0;    //¹¦ÄÜ½ÅÇÐ»»
+ 292   1        PWMA_IER = 0;   //ÖÐ¶ÏÊ¹ÄÜ¼Ä´æÆ÷
+ 293   1        
+ 294   1        PWMA_CCMR1 = 0x68;  //²¶»ñ/±È½ÏÄ£Ê½¼Ä´æÆ÷1£¬0x68 = 0b0110 1000ÅäÖÃÎªÊä³ö£¬¿ªÆôÔ¤×°ÔØ£¬PWMÄ£Ê½1
+ 295   1        PWMA_CCR1 = 0x00;     //²¶»ñ/±È½Ï¼Ä´æÆ÷£¬16Î»£¬µ±Ç°±È½ÏÖµ
+ 296   1        PWMA_CCER1 |= 0x01; //²¶»ñ/±È½ÏÊ¹ÄÜ¼Ä´æÆ÷1£¬Ô­0x05 = 0b0000 0101,ÏÖ¸ÄÎª0x01£¬Ê¹ÄÜOC1Êä³ö
+ 297   1        PWMA_PS |= 0;       //PWMA IOÑ¡Ôñ
+ 298   1        
+C51 COMPILER V9.60.0.0   MAIN                                                              01/14/2023 20:28:46 PAGE 6   
+
+ 299   1        PWMA_CCMR2 = 0x68;  //²¶»ñ/±È½ÏÄ£Ê½¼Ä´æÆ÷2£¬0x68 = 0b0110 1000ÅäÖÃÎªÊä³ö£¬¿ªÆôÔ¤×°ÔØ£¬PWMÄ£Ê½1
+ 300   1        PWMA_CCR2 = 0x00;     //²¶»ñ/±È½Ï¼Ä´æÆ÷£¬16Î»£¬µ±Ç°±È½ÏÖµ£¬ÓëPWMA_ARR±È½Ï
+ 301   1        PWMA_CCER1 |= 0x10; //²¶»ñ/±È½ÏÊ¹ÄÜ¼Ä´æÆ÷1£¬Ô­0x50 = 0b0101 0000£¬ÏÖ¸ÄÎª0x10£¬Ê¹ÄÜOC2Êä³ö
+ 302   1        PWMA_PS |= (0<<2);  //PWMA IOÑ¡Ôñ
+ 303   1        
+ 304   1        PWMA_CCMR3 = 0x68;  //²¶»ñ/±È½ÏÄ£Ê½¼Ä´æÆ÷3£¬0x68 = 0b0110 1000ÅäÖÃÎªÊä³ö£¬¿ªÆôÔ¤×°ÔØ£¬PWMÄ£Ê½1
+ 305   1        PWMA_CCR3 = 0x00;     //²¶»ñ/±È½Ï¼Ä´æÆ÷£¬16Î»£¬µ±Ç°±È½ÏÖµ
+ 306   1        PWMA_CCER2 |= 0x01; //²¶»ñ/±È½ÏÊ¹ÄÜ¼Ä´æÆ÷2£¬Ô­0x05 = 0b0000 0101,ÏÖ¸ÄÎª0x01£¬Ê¹ÄÜOC3Êä³ö
+ 307   1        PWMA_PS |= (0<<4);  //PWMA IOÑ¡Ôñ
+ 308   1        
+ 309   1        PWMA_BKR = 0x80;  //Ê¹ÄÜOCºÍOCNÊä³ö
+ 310   1        PWMA_CR1 = 0x81;  //¿ØÖÆ¼Ä´æÆ÷1£¬Ê¹ÄÜ×Ô¶¯Ô¤×°ÔØ£¬±ßÑØ¶ÔÆë£¬ÏòÉÏ¼ÆÊý£¬Ê¹ÄÜ¼ÆÊýÆ÷
+ 311   1        PWMA_EGR = 0x01;  //³õÊ¼»¯¼ÆÊýÆ÷
+ 312   1      }
+ 313          
+ 314          void ADC_Config(void)
+ 315          {
+ 316   1        //ÉèÖÃÒý½ÅÄ£Ê½Îª¸ß×èÊäÈë£¬M1ÏàÓ¦bitÎª1£¬M0ÏàÓ¦bitÎª0
+ 317   1        P1M1 |= 0xc0; //±êÖ¾Î»ÖÃ1
+ 318   1        P1M0 &= ~0xc0; //±êÖ¾Î»Çå0
+ 319   1        
+ 320   1        //ÉèÖÃÒý½ÅÄ£Ê½Îª¸ß×èÊäÈë£¬M1ÏàÓ¦bitÎª1£¬M0ÏàÓ¦bitÎª0
+ 321   1        P0M1 |= 0x0f;  //±êÖ¾Î»ÖÃ1
+ 322   1        P0M0 &= ~0x0f; //±êÖ¾Î»Çå0
+ 323   1        
+ 324   1        ADC_CONTR = 0x80+6; //ADC¿ØÖÆ¼Ä´æÆ÷£¬bit7ÖÃ1´ò¿ªADCµçÔ´£¬bit3~bit0ÎªÍ¨µÀÑ¡ÔñÎ»£¬STC8H1K28ÏµÁÐÎÞADC12~ADC1
+             -4.STC8H1K08ÏµÁÐÎÞADC2~ADC7
+ 325   1        ADCCFG = RES_FMT + ADC_SPEED; //ADCÅäÖÃ¼Ä´æÆ÷£¬bit5½á¹û¸ñÊ½¿ØÖÆ£¬ÖÃ0×ó¶ÔÆë£¬ÖÃ1ÓÒ¶ÔÆë£¬bit3~bit0ÉèÖÃADCÊ±
+             -ÖÓÆµÂÊ£¬f=Sysclk/2/(speed+1)
+ 326   1        ADCTIM = CSSETUP + CSHOLD + SMPDUTY;  //ADCÊ±Ðò¿ØÖÆ¼Ä´æÆ÷£¬bit7£ºT_setup | bit6~bit5£ºT_hold | bit4~bit0£º
+             -T_duty
+ 327   1      }
+ 328          
+ 329          void CMP_Config(void)
+ 330          {
+ 331   1        //ÉèÖÃCMP-Òý½ÅÎª¸ß×èÊäÈë£¬M1ÏàÓ¦bitÎª1£¬M0ÏàÓ¦bitÎª0
+ 332   1        P3M1 |= 0x40; //0x40 = 0b0100 0000,bit6ÖÃ1
+ 333   1        P3M0 &= ~0x40; //~0x40 = 0b1011 1111£¬bit6ÖÃ0
+ 334   1        
+ 335   1        CMPCR1 = 0x8C;  //±È½ÏÆ÷¿ØÖÆ¼Ä´æÆ÷1¡£bit7Ä£¿éÊ¹ÄÜ£¬bit6ÖÐ¶Ï±êÖ¾Î»£¬bit5ÉÏÉýÑØÖÐ¶ÏÊ¹ÄÜ£¬bit4ÏÂ½µÑØÖÐ¶ÏÊ¹ÄÜ
+ 336   1                        //bit3Õý¼«Ñ¡Ôñ£¬bit2¸º¼«Ñ¡Ôñ£¬bit1½á¹ûÊä³ö¿ØÖÆ£¬bit0±È½Ï½á¹û
+ 337   1                        //0x80 = 0b1000 1100£¬Ê¹ÄÜ±È½ÏÆ÷£¬ADCÎªÕý¼«ÊäÈë£¬P3.6Îª¸º¼«ÊäÈë
+ 338   1        CMPCR2 = 60; //±È½ÏÆ÷¿ØÖÆ¼Ä´æÆ÷2£¬bit7Êä³ö·½Ïò¿ØÖÆ£¬bit6Ä£ÄâÂË²¨¿ØÖÆ£¬ÖÃ0Ê¹ÄÜ£¬bit5~bit0ÂË²¨Ê±ÖÓÊý
+ 339   1      }
+ 340          
+ 341          void Timer0_Config(void)
+ 342          {
+ 343   1        TMOD &= ~0x03;    //¶¨Ê±Æ÷0/1Ä£Ê½¼Ä´æÆ÷£¬~0x03 = 0b1111 1100£¬bit1~bit0ÇåÁã£¬¶¨Ê±Æ÷0ÅäÖÃÎª16Î»×Ô¶¯ÖØÔØÄ£Ê½
+ 344   1        AUXR &= ~(1<<7);  //¸¨Öú¼Ä´æÆ÷1£¬bit7ÖÃ0£¬¶¨Ê±Æ÷0Ê±ÖÓÎªCPUÊ±ÖÓ12·ÖÆµ£¬24MHz/12 = 2MHz
+ 345   1        
+ 346   1        //12·ÖÆµÏÂ£¬¶¨Ê±Æ÷ÖÜÆÚ=(65536-[TH0,TL0])*12/FOSC,Èç4ms¶¨Ê±£¬ÕâÖÜÆÚ= 0.004 = 1/250
+ 347   1        TH0 = (65536UL - FOSC / 12 / 250)>>8; //¶¨Ê±Æ÷0¼ÆÊý¼Ä´æÆ÷
+ 348   1        TL0 = (u8)(65536UL - FOSC / 12 / 250); //¶¨Ê±Æ÷0¼ÆÊý¼Ä´æÆ÷
+ 349   1        TR0 = 1;  //Æô¶¯¶¨Ê±Æ÷0
+ 350   1        ET0 = 1;  //Ê¹ÄÜ¶¨Ê±Æ÷0ÖÐ¶Ï
+ 351   1      }
+ 352          
+ 353          void Timer3_Config(void)
+ 354          {
+ 355   1        T4T3M &= 0xf0;  //¶¨Ê±Æ÷3/4¿ØÖÆ¼Ä´æÆ÷£¬¸ß4Î»¶¨Ê±Æ÷4£¬µÍ4Î»¶¨Ê±Æ÷3¡£µÍ4Î»ÇåÁã£¬¶¨Ê±Æ÷3Í£Ö¹¼ÆÊý£¬ÓÃ×÷¶¨Ê±Æ÷£
+             -¬12·ÖÆµ£¬¹Ø±ÕÊ±ÖÓÊä³ö
+ 356   1        T3H = 0;  //¶¨Ê±Æ÷3¼ÆÊý¼Ä´æÆ÷
+C51 COMPILER V9.60.0.0   MAIN                                                              01/14/2023 20:28:46 PAGE 7   
+
+ 357   1        T3L = 0;  //¶¨Ê±Æ÷3¼ÆÊý¼Ä´æÆ÷
+ 358   1        
+ 359   1        T3T4PIN = 0x01; //¶¨Ê±Æ÷3/4¹¦ÄÜÒý½ÅÇÐ»»¼Ä´æÆ÷£¬bit0Ñ¡ÔñÎ»£¬ÖÃ1Ñ¡ÔñP0.0£¬P0.1£¬P0.2£¬P0.3
+ 360   1        IE2 |= (1<<5);  //ÖÐ¶ÏÊ¹ÄÜ¼Ä´æÆ÷2£¬bit5Îª¶¨Ê±Æ÷3µÄÒç³öÖÐ¶ÏÔÊÐíÎ»£¬ÖÃ1¿ªÖÐ¶Ï
+ 361   1        T4T3M |= (1<<3);  //¶¨Ê±Æ÷3/4¿ØÖÆ¼Ä´æÆ÷£¬bit3ÖÃ1£¬¶¨Ê±Æ÷3¿ªÊ¼¼ÆÊý
+ 362   1      }
+ 363          
+ 364          void Timer4_Config(void)
+ 365          {
+ 366   1        T4T3M &= 0x0f; //¶¨Ê±Æ÷3/4¿ØÖÆ¼Ä´æÆ÷£¬¸ß4Î»¶¨Ê±Æ÷4£¬µÍ4Î»¶¨Ê±Æ÷3¡£µÍ4Î»ÇåÁã£¬¶¨Ê±Æ÷4Í£Ö¹¼ÆÊý£¬ÓÃ×÷¶¨Ê±Æ÷£
+             -¬12·ÖÆµ£¬¹Ø±ÕÊ±ÖÓÊä³ö
+ 367   1        T4H = 0;  //¶¨Ê±Æ÷4¼ÆÊý¼Ä´æÆ÷
+ 368   1        T4L = 0;  //¶¨Ê±Æ÷4¼ÆÊý¼Ä´æÆ÷
+ 369   1        
+ 370   1        //T4H = (u8)((65536UL - 40*2) >> 8);  //²âÊÔÓÃ£¬¶¨Ê±Æ÷4¼ÆÊýÆµÂÊÎª2MHz£¬40usÒªÓÃ80´Î
+ 371   1        //T4L = (u8)(65536UL - 40*2); //²âÊÔÓÃ
+ 372   1        
+ 373   1        T3T4PIN = 0x01; //¶¨Ê±Æ÷3/4¹¦ÄÜÒý½ÅÇÐ»»¼Ä´æÆ÷£¬bit0Ñ¡ÔñÎ»£¬ÖÃ1Ñ¡ÔñP0.0£¬P0.1£¬P0.2£¬P0.3
+ 374   1        IE2 |= (1<<6);  //ÖÐ¶ÏÊ¹ÄÜ¼Ä´æÆ÷2£¬bit6Îª¶¨Ê±Æ÷4µÄÒç³öÖÐ¶ÏÔÊÐíÎ»£¬ÖÃ1¿ªÖÐ¶Ï
+ 375   1        //T4T3M |=  (1<<7); //¿ªÊ¼¼ÆÊý£¬²âÊÔÓÃ
+ 376   1      }
+ 377          
+ 378          u16 Get_ADCRes(u8 ch)
+ 379          {
+ 380   1        u8 i = 255; //ADC×ª»»³¬Ê±¼ÆÊý£¬Ä£ºý¼ÆÊ±
+ 381   1        ADC_RES = 0;  //ADC×ª»»½á¹û¼Ä´æÆ÷£¬ÇåÁã
+ 382   1        ADC_RESL = 0; //ADC×ª»»½á¹û¼Ä´æÆ÷L£¬ÇåÁã
+ 383   1        ADC_CONTR = 0x80|ADC_START|ch; //Ñ¡ÔñADCÍ¨µÀ²¢¿ªÊ¼×ª»»
+ 384   1        _nop_();
+ 385   1        while(i != 0)
+ 386   1        {
+ 387   2          i--;
+ 388   2          if((ADC_CONTR & ADC_FLAG) != 0) break;  //µÈ´ýADC½áÊø
+ 389   2        }
+ 390   1        ADC_CONTR &= ~ADC_FLAG; //Çå³ý×ª»»Íê³É±êÖ¾Î»
+ 391   1        return  ((u16)ADC_RES>>8 + (u16)ADC_RESL); //·µ»Ø¶ÁÈ¡½á¹û
+ 392   1      }
+ 393          
+ 394          void Motor_Start(void)
+ 395          {
+ 396   1        u16 timer,i;
+ 397   1        CMPCR1 = 0x8C;  // ¹Ø±È½ÏÆ÷ÖÐ¶Ï
+ 398   1      
+ 399   1        PWM_Value  = D_START_PWM; // ³õÊ¼Õ¼¿Õ±È, ¸ù¾Ýµç»úÌØÐÔÉèÖÃ
+ 400   1        PWMA_CCR1L = PWM_Value;
+ 401   1        PWMA_CCR2L = PWM_Value;
+ 402   1        PWMA_CCR3L = PWM_Value;
+ 403   1        step = 0;
+ 404   1        Motor_Step();
+ 405   1        Delay_n_ms(50);
+ 406   1        //Delay_n_ms(250);// ³õÊ¼Î»ÖÃ
+ 407   1        timer = 200;  //·çÉÈµç»úÆô¶¯
+ 408   1      
+ 409   1        while(1)
+ 410   1        {
+ 411   2          for(i=0; i<timer; i++)  delay_us(100);  //¸ù¾Ýµç»ú¼ÓËÙÌØÐÔ, ×î¸ß×ªËÙµÈµÈµ÷ÕûÆô¶¯¼ÓËÙËÙ¶È
+ 412   2          timer -= timer /16;
+ 413   2          if(++step >= 6) step = 0;
+ 414   2          Motor_Step();
+ 415   2          if(timer < 40)  return;
+ 416   2        }
+ 417   1      }
+C51 COMPILER V9.60.0.0   MAIN                                                              01/14/2023 20:28:46 PAGE 8   
+
+ 418          
+ 419          //»»Ïàº¯Êý
+ 420          //¸ù¾Ýµç»úÍ¨µÀÐòºÅ£¬¸ø¸÷ÏàÍ¨µç
+ 421          void Motor_Step(void)
+ 422          {
+ 423   1        switch(step)
+ 424   1        {
+ 425   2          case 0: //ABÏàÍ¨µç£¬ÆÚ¼äCÏà¸ÐÓ¦µç¶¯ÊÆÓÉ¸ºµ½Õý±ä»¯£¬AÉÏ¹Üµ¼Í¨£¬BÏÂ¹Üµ¼Í¨£¬ÆäÓàMOS¹Ü¹Ø¶Ï
+ 426   2            PWMA_ENO = 0x00; //¹Ø±ÕËùÓÐPWMÊä³ö£¬ÌØ±ðÊÇÉÏÒ»²½CÏàÉÏ¹Üµ¼Í¨£¬ÐèÏÈ¹Ø¶Ï£¬È»ºó¿ªÆôAÏàÉÏ¹Ü
+ 427   2            PWM1_L = 0; //AÏàÏÂ¹Ü¹Ø¶Ï
+ 428   2            PWM3_L = 0; //CÏàÏÂ¹Ü¹Ø¶Ï
+ 429   2            delay_dead(); //ÑÓ³Ù£¬·ÀÖ¹ACÏàÉÏ¹ÜÍ¬Ê±µ¼Í¨
+ 430   2            PWMA_ENO = 0x01; //´ò¿ªAÏàÉÏ¹ÜPWM
+ 431   2            PWM2_L = 1; //BÏàÏÂ¹Üµ¼Í¨
+ 432   2            ADC_CONTR = 0x80+10; //Ñ¡ÔñADC10£¨¼´P0.2£©²ÉÑù
+ 433   2            if(m_running) CMPCR1 = 0x8c + 0x10; //±È½ÏÆ÷ÏÂ½µÑØÖÐ¶ÏÊ¹ÄÜ
+ 434   2            else CMPCR1 = 0x8c; //µç»úÆô¶¯Ê±¹Ø±Õ±È½ÏÆ÷ÖÐ¶Ï
+ 435   2            break;
+ 436   2          case 1: //ACÏàÍ¨µç£¬ÆÚ¼äBÏà¸ÐÓ¦µç¶¯ÊÆÓÉÕýµ½¸º±ä»¯£¬AÏàÉÏ¹Üµ¼Í¨£¬CÏàÏÂ¹Üµ¼Í¨£¬ÆäÓàMOS¹Ü¹Ø¶Ï
+ 437   2            PWMA_ENO = 0x01;  //AÏàÉÏ¹Üµ¼Í¨
+ 438   2            PWM1_L = 0; //AÏàÏÂ¹Ü¹Ø¶Ï
+ 439   2            PWM2_L = 0; //BÏàÏÂ¹Ü¹Ø¶Ï
+ 440   2            delay_dead(); //ÑÓ³Ù£¬·ÀÖ¹BCÏàÏÂ¹ÜÍ¬Ê±µ¼Í¨
+ 441   2            PWM3_L = 1; //CÏàÏÂ¹Üµ¼Í¨
+ 442   2            ADC_CONTR = 0x80 + 9; //Ñ¡ÔñADC9£¨P0.1£©²ÉÑù
+ 443   2            if(m_running) CMPCR1 = 0x8c + 0x20; //±È½ÏÆ÷ÉÏÉýÑØÖÐ¶ÏÊ¹ÄÜ
+ 444   2            else CMPCR1 = 0x8c; //µç»úÆô¶¯Ê±¹Ø±Õ±È½ÏÆ÷ÖÐ¶Ï
+ 445   2            break;
+ 446   2          case 2: //BCÏàÍ¨µç£¬ÆÚ¼äAÏà¸ÐÓ¦µç¶¯ÊÆÓÉ¸ºµ½Õý±ä»¯£¬BÏàÉÏ¹Üµ¼Í¨£¬CÏàÏÂ¹Üµ¼Í¨£¬ÆäÓàMOS¹Ü¹Ø¶Ï
+ 447   2            PWMA_ENO = 0x00; //¹Ø±ÕËùÓÐPWMÊä³ö£¬ÌØ±ðÊÇÉÏÒ»²½AÏàÉÏ¹Üµ¼Í¨£¬ÐèÏÈ¹Ø¶Ï£¬È»ºó²ÅÄÜ¿ªÆôBÏàÉÏ¹Ü
+ 448   2            PWM1_L = 0; //AÏàÏÂ¹Ü¹Ø¶Ï
+ 449   2            PWM2_L = 0; //BÏàÏÂ¹Ü¹Ø¶Ï
+ 450   2            delay_dead();
+ 451   2            PWMA_ENO = 0x04;  //´ò¿ªBÏàÉÏ¹ÜPWM
+ 452   2            PWM3_L = 1; //CÏàÏÂ¹Üµ¼Í¨
+ 453   2            ADC_CONTR = 0x80+8;   //Ñ¡ÔñADC8£¨P0.0£©²ÉÑù
+ 454   2            if(m_running) CMPCR1 = 0x8c + 0x10; //±È½ÏÆ÷ÏÂ½µÑØÖÐ¶ÏÊ¹ÄÜ
+ 455   2            else CMPCR1 = 0x8c; //µç»úÆô¶¯Ê±¹Ø±Õ±È½ÏÆ÷ÖÐ¶Ï
+ 456   2            break;
+ 457   2          case 3: //BAÏàÍ¨µç£¬ÆÚ¼äCÏà¸ÐÓ¦µç¶¯ÊÆÓÉÕýµ½¸º±ä»¯£¬BÏàÉÏ¹Üµ¼Í¨£¬AÏàÏÂ¹Üµ¼Í¨£¬ÆäÓàMOS¹Ü¹Ø¶Ï
+ 458   2            PWMA_ENO = 0x04;  //´ò¿ªBÏàÉÏ¹Ü£¬¹Ø±ÕAºÍCÏàÉÏ¹Ü
+ 459   2            PWM2_L = 0; //BÏàÏÂ¹Ü¹Ø¶Ï
+ 460   2            PWM3_L = 0; //CÏàÏÂ¹Ü¹Ø¶Ï
+ 461   2            delay_dead(); //ËÀÇøÑÓÊ±£¬´í¿ªACÏàÏÂ¹ÜËÀÇø
+ 462   2            PWM1_L = 1; //AÏàÏÂ¹Üµ¼Í¨
+ 463   2            ADC_CONTR = 0x80 + 10;  //Ñ¡ÔñADC10£¨P0.2£©²ÉÑù
+ 464   2            if(m_running) CMPCR1 = 0x8c + 0x20; //±È½ÏÆ÷ÉÏÉýÑØÖÐ¶ÏÊ¹ÄÜ
+ 465   2            else CMPCR1 = 0x8c; //µç»úÆô¶¯Ê±¹Ø±Õ±È½ÏÆ÷ÖÐ¶Ï
+ 466   2            break;
+ 467   2          case 4: //CAÏàÍ¨µç£¬ÆÚ¼äBÏà¸ÐÓ¦µç¶¯ÊÆÓÉ¸ºµ½Õý±ä»¯£¬CÏàÉÏ¹Üµ¼Í¨£¬AÏàÏÂ¹Üµ¼Í¨£¬ÆäÓàMOS¹Ü¹Ø¶Ï
+ 468   2            PWMA_ENO = 0x00;  //¹Ø±ÕËùÓÐÉÏ¹ÜPWM£¬·ÀÖ¹BCÏàÉÏ¹ÜÍ¬Ê±µ¼Í¨
+ 469   2            PWM2_L = 0; //BÏàÏÂ¹Ü¹Ø¶Ï
+ 470   2            PWM3_L = 0; //CÏàÏÂ¹Ü¹Ø¶Ï
+ 471   2            delay_dead(); //ËÀÇøÑÓÊ±£¬´í¿ªBCÏàÉÏ¹ÜËÀÇø
+ 472   2            PWMA_ENO = 0x10;  //Ê¹ÄÜCÏàÉÏ¹ÜPWM
+ 473   2            PWM1_L = 1; //AÏàÏÂ¹Üµ¼Í¨
+ 474   2            ADC_CONTR = 0x80+9; //ADC9£¨P0.1£©²ÉÑù
+ 475   2            if(m_running) CMPCR1 = 0x8c + 0x10; //±È½ÏÆ÷ÏÂ½µÑØÖÐ¶ÏÊ¹ÄÜ
+ 476   2            else CMPCR1 = 0x8c; //µç»úÆô¶¯Ê±¹Ø±Õ±È½ÏÆ÷ÖÐ¶Ï
+ 477   2            break;
+ 478   2          case 5: //CBÏàÍ¨µç£¬ÆÚ¼äAÏà¸ÐÓ¦µç¶¯ÊÆÓÉÕýµ½¸º±ä»¯£¬CÏàÉÏ¹Üµ¼Í¨£¬BÏàÏÂ¹Üµ¼Í¨£¬ÆäÓàMOS¹Ü¹Ø¶Ï
+ 479   2            PWMA_ENO = 0x10;  //Ê¹ÄÜCÏàÉÏ¹ÜPWM
+C51 COMPILER V9.60.0.0   MAIN                                                              01/14/2023 20:28:46 PAGE 9   
+
+ 480   2            PWM1_L = 0; //AÏàÏÂ¹Ü¹Ø¶Ï
+ 481   2            PWM3_L = 0; //CÏàÏÂ¹Ü¹Ø¶Ï
+ 482   2            delay_dead(); //ËÀÇøÑÓÊ±£¬´í¿ªABÏàÏÂ¹ÜËÀÇø
+ 483   2            PWM2_L = 1; //BÏàÏÂ¹Üµ¼Í¨
+ 484   2            ADC_CONTR = 0x80 + 8; //ADC8£¨P0.0£©²ÉÑù
+ 485   2            if(m_running) CMPCR1 = 0x8c + 0x20; //±È½ÏÆ÷ÉÏÉýÑØÖÐ¶ÏÊ¹ÄÜ
+ 486   2            else CMPCR1 = 0x8c; //µç»úÆô¶¯Ê±¹Ø±Õ±È½ÏÆ÷ÖÐ¶Ï
+ 487   2            break;
+ 488   2          default:
+ 489   2            break;
+ 490   2        }
+ 491   1      }
+ 492          
+ 493          void Uart_Config(void)
+ 494          {
+ 495   1        SCON = 0x50;
+ 496   1        T2L = BRT;
+ 497   1        T2H = BRT>>8;
+ 498   1        AUXR = 0x15;
+ 499   1        wptr = 0;
+ 500   1        busy = 0;
+ 501   1      }
+ 502          
+ 503          void UartSend(char dat)
+ 504          {
+ 505   1        while(busy);
+ 506   1        busy = 1;
+ 507   1        SBUF = dat;
+ 508   1      }
+ 509          
+ 510          void UartSendStr(char *p)
+ 511          {
+ 512   1        while(*p)
+ 513   1        {
+ 514   2          UartSend(*p++);
+ 515   2        }
+ 516   1      }
+ 517          
+ 518          void UartSendNum(int num)
+ 519          {
+ 520   1        char buf[8];
+ 521   1        u8 dat;
+ 522   1        u8 i = 0;
+ 523   1        if(num<0)
+ 524   1        {
+ 525   2          UartSend('-');
+ 526   2          num = -num;
+ 527   2        }
+ 528   1        while(num)
+ 529   1        {
+ 530   2          dat = num%10;
+ 531   2          buf[i] = dat + 0x30;
+ 532   2          num /= 10;
+ 533   2          i++;
+ 534   2        }
+ 535   1        UartSendStr(buf);
+ 536   1      }
+ 537          
+ 538          //±È½ÏÆ÷ÖÐ¶Ïº¯Êý
+ 539          //¼ì²âµ½¹ýÁãÊÂ¼þºó£¬¸ù¾Ý¶¨Ê±Æ÷3µÄ¼ÆÊýÖµ¼ÆËãÀëÉÏÒ»´Î¹ýÁãÊÂ¼þµÄÊ±¼ä
+ 540          //Çó³ö8´Î»»ÏàËùÓÃÊ±¼ä³ýÒÔ16£¬¼ÆËãÃ¿°ë´Î»»ÏàËùÐèÊ±¼ä£¬¼´ÎªÀëÏÂ´Î»»ÏàËùÐèÊ±¼ä
+ 541          void CMP_ISR(void) interrupt 21
+C51 COMPILER V9.60.0.0   MAIN                                                              01/14/2023 20:28:46 PAGE 10  
+
+ 542          {
+ 543   1        u16 phase_time;
+ 544   1        u8 i;
+ 545   1        
+ 546   1        CMPCR1 %= ~0x40; //Çå³ýÖÐ¶Ï±êÖ¾Î»
+ 547   1        
+ 548   1        if(demagnetizing_cnt == 0) //Ïû´Åºó¼ì²â¹ýÁãÊÂ¼þ£¬Î´Ïû´Å²»´¦Àí±È½ÏÆ÷ÖÐ¶Ï
+ 549   1        {
+ 550   2          T4T3M &= ~(1<<3); //Timer3Í£Ö¹¼ÆÊý
+ 551   2          if(t3_flag)
+ 552   2          {
+ 553   3            t3_flag = 0;
+ 554   3            phase_time = 0x1fff;
+ 555   3          }
+ 556   2          else
+ 557   2          {
+ 558   3            phase_time = (((u16)T3H<<8)+(u16)T3L)>>1;
+ 559   3            phase_time &= 0x1ffff;
+ 560   3          }
+ 561   2          T3H = 0;
+ 562   2          T3L = 0;
+ 563   2          T4T3M |= (1<<3);
+ 564   2          
+ 565   2          phase_time_tmp[time_index] = phase_time;
+ 566   2          if(++time_index >=8) time_index = 0;
+ 567   2          for(phase_time = 0,i = 0;i<8;i++)
+ 568   2          {
+ 569   3            phase_time += phase_time_tmp[i];
+ 570   3          }
+ 571   2          phase_time >>= 4;
+ 572   2          debug_phase_time = phase_time;
+ 573   2          if(phase_time > 40 && phase_time < 1000)
+ 574   2          {
+ 575   3            cmp_it_flag = 1;
+ 576   3            timeout = 125;
+ 577   3          }
+ 578   2          if(phase_time > 40) phase_time -= 40;
+ 579   2          else phase_time = 20;
+ 580   2          
+ 581   2          T4T3M &= ~(1<<7);
+ 582   2          phase_time = phase_time << 1;
+ 583   2          phase_time = 0 - phase_time;
+ 584   2          T4H = (u8)(phase_time >> 8);
+ 585   2          T4L = (u8)phase_time;
+ 586   2          T4T3M |= (1<<7);
+ 587   2          demagnetizing_cnt = 1;
+ 588   2        }
+ 589   1      }
+ 590          
+ 591          void Timer0_ISR(void) interrupt 1
+ 592          {
+ 593   1        //PWM1 = !PWM1; //¶¨Ê±Æ÷0ÖÐ¶Ï²âÊÔ£¬·­×ªPWM1Òý½ÅµçÆ½
+ 594   1        t0_flag = 1;
+ 595   1      }
+ 596          
+ 597          void Timer3_ISR(void) interrupt 19
+ 598          {
+ 599   1        //PWM2 = !PWM2; //¶¨Ê±Æ÷3ÖÐ·Ö¶Î²âÊÔ£¬·­×ªPWM2Òý½ÅµçÆ½
+ 600   1        t3_flag = 1;
+ 601   1      }
+ 602          
+ 603          //µç»úÆô¶¯ºóÀûÓÃ¶¨Ê±Æ÷4À´»»ÏàºÍÏû´Å£¬Ïû´ÅÔ­Àí¼ò»¯³É¶ÌÑÓÊ±£¬´Ë´¦ÉèÎª40usÑÓÊ±£¬µçÁ÷Ô½´ó£¬Ïû´ÅÊ±¼äÔ½³¤
+C51 COMPILER V9.60.0.0   MAIN                                                              01/14/2023 20:28:46 PAGE 11  
+
+ 604          //µç»ú»»Ïàºó£¬¶ÏµçµÄÄÇÒ»Ïà£¬ÓÉÓÚÏßÈ¦µÄ´æÔÚ»á²úÉú×Ô¸Ðµç¶¯ÊÆ£¬Èô²»Ïû´Å£¬»áÒýÆð±È½ÏÆ÷ÔÚ·Ç¸ÐÓ¦µç¶¯ÊÆ¹ýÁãÊ±¿ÌÖÐ
+             -¶Ï
+ 605          //´Ë´¦¸ù¾ÝÐÞ¸Ädemagnetzing_cntÏû´Å¼ÆÊýÖµÀ´Ìø¹ýÒòÏû´ÅÒýÆðµÄ±È½ÏÆ÷ÖÐ¶Ï
+ 606          void Timer4_ISR(void) interrupt 20
+ 607          {
+ 608   1        T4T3M &= ~(1<<7); //¶¨Ê±Æ÷3/4¿ØÖÆ¼Ä´æÆ÷bit7ÖÃ0£¬¶¨Ê±Æ÷4Í£Ö¹¼ÆÊý
+ 609   1        
+ 610   1        if(demagnetizing_cnt == 1)  //ÅÐ¶ÏÏû´Å¼ÆÊýÖµ£¬Îª1ÎªÐèÒªÏû´Å
+ 611   1        {
+ 612   2          demagnetizing_cnt = 2;  //½«Ïû´Å¼ÆÊýÖµ¸ÄÎª2£¬ÏÈ»»Ïà£¬ÔÙ½øÐÐÏû´Å
+ 613   2          if(m_running)
+ 614   2          {
+ 615   3            t4_it_flag1 = 1;
+ 616   3            if(++step >= 6) step = 0;
+ 617   3            Motor_Step();
+ 618   3          }
+ 619   2          
+ 620   2          T4H = (u8)((65536UL - 40*2) >> 8);  //40us¼ÆÊý£¬(65536 - t *2)£¬tµ¥Î»us£¬¸ß8Î»·ÅÈëT4H£¬µÍ8Î»·ÅÈëT4L
+ 621   2          T4L = (u8)(65536UL - 40*2); //40us¼ÆÊý
+ 622   2          T4T3M |=  (1<<7); //Timer4¿ªÊ¼¼ÆÊý
+ 623   2        }
+ 624   1        else if(demagnetizing_cnt == 2)
+ 625   1        {
+ 626   2          t4_it_flag2 = 1;
+ 627   2          demagnetizing_cnt = 0;
+ 628   2        }
+ 629   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1573    ----
+   CONSTANT SIZE    =     84    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     41      19
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      8    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)

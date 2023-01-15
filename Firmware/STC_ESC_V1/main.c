@@ -26,7 +26,6 @@ u8	step;		//切换步骤
 u8	PWM_Value;	// 决定PWM占空比的值
 bit	B_RUN;		//运行标志
 u8	PWW_Set;	//目标PWM设置
-u16	adc11;
 bit	B_4ms;		//4ms定时标志
 
 u8	TimeOut;	//堵转超时
@@ -60,89 +59,84 @@ void delay_us(u8 us)	//N us延时函数
 	while(--us);
 }
 
-//========================================================================
-// 函数: u16	Get_ADC10bitResult(u8 channel))	//channel = 0~15
-//========================================================================
-u16	Get_ADC10bitResult(u8 channel)	//channel = 0~15
-{
-	u8 i;
-	ADC_RES = 0;
-	ADC_RESL = 0;
-	ADC_CONTR = 0x80 | ADC_START | channel; 
-	NOP(5);			//
-//	while((ADC_CONTR & ADC_FLAG) == 0)	;	//等待ADC结束
-		i = 255;
-		while(i != 0)
-		{
-			i--;
-			if((ADC_CONTR & ADC_FLAG) != 0)	break;	//等待ADC结束
-		}
-	ADC_CONTR &= ~ADC_FLAG;
-	return	((u16)ADC_RES * 256 + (u16)ADC_RESL);
-}
-
-
 void	Delay_500ns(void)
 {
 	NOP(6);
 }
 
+#define delay_200ns() do{_nop_();_nop_();_nop_();_nop_();}while(0) //根据MOS管手册调整死区时间，现采用的MOS管导通关断时间最大为55ns，此处调整为200ns延时
+#define delay_dead() delay_200ns()
+
 void StepMotor(void) // 换相序列函数
 {
 	switch(step)
 	{
-	case 0:  // AB  PWM1, PWM2_L=1
-			PWMA_ENO = 0x00;	PWM1_L=0;	PWM3_L=0;
-			Delay_500ns();
-			PWMA_ENO = 0x01;		// 打开A相的高端PWM
-			PWM2_L = 1;				// 打开B相的低端
-			ADC_CONTR = 0x80+10;	// 选择P0.2作为ADC输入 即C相电压
-			CMPCR1 = 0x8c + 0x10;	//比较器下降沿中断
+		case 0: //AB相通电，期间C相感应电动势由负到正变化，A上管导通，B下管导通，其余MOS管关断
+			PWMA_ENO = 0x00; //关闭所有PWM输出，特别是上一步C相上管导通，需先关断，然后开启A相上管
+			PWM1_L = 0; //A相下管关断
+			PWM3_L = 0; //C相下管关断
+			delay_dead(); //延迟，防止AC相上管同时导通
+			PWMA_ENO = 0x01; //打开A相上管PWM
+			PWM2_L = 1;	//B相下管导通
+			ADC_CONTR = 0x80+10; //选择ADC10（即P0.2）采样
+			if(B_RUN) CMPCR1 = 0x8c + 0x10; //比较器下降沿中断使能
+			else CMPCR1 = 0x8c; //电机启动时关闭比较器中断
 			break;
-	case 1:  // AC  PWM1, PWM3_L=1
-			PWMA_ENO = 0x01;	PWM1_L=0;	PWM2_L=0;	// 打开A相的高端PWM
-			Delay_500ns();
-			PWM3_L = 1;				// 打开C相的低端
-			ADC_CONTR = 0x80+9;		// 选择P0.1作为ADC输入 即B相电压
-			CMPCR1 = 0x8c + 0x20;	//比较器上升沿中断
+		case 1:	//AC相通电，期间B相感应电动势由正到负变化，A相上管导通，C相下管导通，其余MOS管关断
+			PWMA_ENO = 0x01;	//A相上管导通
+			PWM1_L = 0;	//A相下管关断
+			PWM2_L = 0; //B相下管关断
+			delay_dead(); //延迟，防止BC相下管同时导通
+			PWM3_L = 1;	//C相下管导通
+			ADC_CONTR = 0x80 + 9;	//选择ADC9（P0.1）采样
+			if(B_RUN) CMPCR1 = 0x8c + 0x20; //比较器上升沿中断使能
+			else CMPCR1 = 0x8c;	//电机启动时关闭比较器中断
 			break;
-	case 2:  // BC  PWM2, PWM3_L=1
-			PWMA_ENO = 0x00;	PWM1_L=0;	PWM2_L=0;
-			Delay_500ns();
-			PWMA_ENO = 0x04;		// 打开B相的高端PWM
-			PWM3_L = 1;				// 打开C相的低端
-			ADC_CONTR = 0x80+8;		// 选择P0.0作为ADC输入 即A相电压
-			CMPCR1 = 0x8c + 0x10;	//比较器下降沿中断
+		case 2:	//BC相通电，期间A相感应电动势由负到正变化，B相上管导通，C相下管导通，其余MOS管关断
+			PWMA_ENO = 0x00; //关闭所有PWM输出，特别是上一步A相上管导通，需先关断，然后才能开启B相上管
+			PWM1_L = 0;	//A相下管关断
+			PWM2_L = 0; //B相下管关断
+			delay_dead();
+			PWMA_ENO = 0x04;	//打开B相上管PWM
+			PWM3_L = 1;	//C相下管导通
+			ADC_CONTR = 0x80+8;		//选择ADC8（P0.0）采样
+			if(B_RUN) CMPCR1 = 0x8c + 0x10; //比较器下降沿中断使能
+			else CMPCR1 = 0x8c; //电机启动时关闭比较器中断
 			break;
-	case 3:  // BA  PWM2, PWM1_L=1
-			PWMA_ENO = 0x04;	PWM2_L=0;	PWM3_L=0;	// 打开B相的高端PWM
-			Delay_500ns();
-			PWM1_L = 1;				// 打开C相的低端
-			ADC_CONTR = 0x80+10;	// 选择P0.2作为ADC输入 即C相电压
-			CMPCR1 = 0x8c + 0x20;	//比较器上升沿中断
+		case 3: //BA相通电，期间C相感应电动势由正到负变化，B相上管导通，A相下管导通，其余MOS管关断
+			PWMA_ENO = 0x04;	//打开B相上管，关闭A和C相上管
+			PWM2_L = 0;	//B相下管关断
+			PWM3_L = 0; //C相下管关断
+			delay_dead();	//死区延时，错开AC相下管死区
+			PWM1_L = 1;	//A相下管导通
+			ADC_CONTR = 0x80 + 10;	//选择ADC10（P0.2）采样
+			if(B_RUN) CMPCR1 = 0x8c + 0x20; //比较器上升沿中断使能
+			else CMPCR1 = 0x8c;	//电机启动时关闭比较器中断
 			break;
-	case 4:  // CA  PWM3, PWM1_L=1
-			PWMA_ENO = 0x00;	PWM2_L=0;	PWM3_L=0;
-			Delay_500ns();
-			PWMA_ENO = 0x10;		// 打开C相的高端PWM
-			PWM1_L = 1;				// 打开A相的低端
-			adc11 = ((adc11 *7)>>3) + Get_ADC10bitResult(11);
-			ADC_CONTR = 0x80+9;		// 选择P0.1作为ADC输入 即B相电压
-			CMPCR1 = 0x8c + 0x10;	//比较器下降沿中断
+		case 4: //CA相通电，期间B相感应电动势由负到正变化，C相上管导通，A相下管导通，其余MOS管关断
+			PWMA_ENO = 0x00;	//关闭所有上管PWM，防止BC相上管同时导通
+			PWM2_L = 0;	//B相下管关断
+			PWM3_L = 0;	//C相下管关断
+			delay_dead();	//死区延时，错开BC相上管死区
+			PWMA_ENO = 0x10;	//使能C相上管PWM
+			PWM1_L = 1;	//A相下管导通
+			ADC_CONTR = 0x80+9;	//ADC9（P0.1）采样
+			if(B_RUN) CMPCR1 = 0x8c + 0x10; //比较器下降沿中断使能
+			else CMPCR1 = 0x8c;	//电机启动时关闭比较器中断
 			break;
-	case 5:  // CB  PWM3, PWM2_L=1
-			PWMA_ENO = 0x10;	PWM1_L=0;	PWM3_L=0;	// 打开C相的高端PWM
-			Delay_500ns();
-			PWM2_L = 1;				// 打开B相的低端
-			ADC_CONTR = 0x80+8;		// 选择P0.0作为ADC输入 即A相电压
-			CMPCR1 = 0x8c + 0x20;	//比较器上升沿中断
+		case 5:	//CB相通电，期间A相感应电动势由正到负变化，C相上管导通，B相下管导通，其余MOS管关断
+			PWMA_ENO = 0x10;	//使能C相上管PWM
+			PWM1_L = 0;	//A相下管关断
+			PWM3_L = 0;	//C相下管关断
+			delay_dead();	//死区延时，错开AB相下管死区
+			PWM2_L = 1;	//B相下管导通
+			ADC_CONTR = 0x80 + 8;	//ADC8（P0.0）采样
+			if(B_RUN) CMPCR1 = 0x8c + 0x20; //比较器上升沿中断使能
+			else CMPCR1 = 0x8c; //电机启动时关闭比较器中断
 			break;
-
-	default:
+		default:
 			break;
 	}
-
-	if(B_start)		CMPCR1 = 0x8C;	// 启动时禁止下降沿和上升沿中断
 }
 
 
@@ -150,53 +144,49 @@ void StepMotor(void) // 换相序列函数
 void PWMA_config(void)
 {
 	P_SW2 |= 0x80;		//SFR enable   
-
-	PWM1   = 0;
+	
+//先将MOS管选通信号拉低，防止误导通
+	PWM1 = 0;
 	PWM1_L = 0;
-	PWM2   = 0;
+	PWM2 = 0;
 	PWM2_L = 0;
-	PWM3   = 0;
+	PWM3 = 0;
 	PWM3_L = 0;
-	P1n_push_pull(0x3f);
-
-	PWMA_PSCR = 3;		// 预分频寄存器, 分频 Fck_cnt = Fck_psc/(PSCR[15:0}+1), 边沿对齐PWM频率 = SYSclk/((PSCR+1)*(AAR+1)), 中央对齐PWM频率 = SYSclk/((PSCR+1)*(AAR+1)*2).
-	PWMA_DTR  = 24;		// 死区时间配置, n=0~127: DTR= n T,   0x80 ~(0x80+n), n=0~63: DTR=(64+n)*2T,  
-						//				0xc0 ~(0xc0+n), n=0~31: DTR=(32+n)*8T,   0xE0 ~(0xE0+n), n=0~31: DTR=(32+n)*16T,
-	PWMA_ARR    = 255;	// 自动重装载寄存器,  控制PWM周期
-	PWMA_CCER1  = 0;
-	PWMA_CCER2  = 0;
-	PWMA_SR1    = 0;
-	PWMA_SR2    = 0;
-	PWMA_ENO    = 0;
-	PWMA_PS     = 0;
-	PWMA_IER    = 0;
-//	PWMA_ISR_En = 0;
-
-	PWMA_CCMR1  = 0x68;		// 通道模式配置, PWM模式1, 预装载允许
-	PWMA_CCR1   = 0;		// 比较值, 控制占空比(高电平时钟数)
-	PWMA_CCER1 |= 0x05;		// 开启比较输出, 高电平有效
-	PWMA_PS    |= 0;		// 选择IO, 0:选择P1.0 P1.1, 1:选择P2.0 P2.1, 2:选择P6.0 P6.1, 
-//	PWMA_ENO   |= 0x01;		// IO输出允许,  bit7: ENO4N, bit6: ENO4P, bit5: ENO3N, bit4: ENO3P,  bit3: ENO2N,  bit2: ENO2P,  bit1: ENO1N,  bit0: ENO1P
-//	PWMA_IER   |= 0x02;		// 使能中断
-
-	PWMA_CCMR2  = 0x68;		// 通道模式配置, PWM模式1, 预装载允许
-	PWMA_CCR2   = 0;		// 比较值, 控制占空比(高电平时钟数)
-	PWMA_CCER1 |= 0x50;		// 开启比较输出, 高电平有效
-	PWMA_PS    |= (0<<2);	// 选择IO, 0:选择P1.2 P1.3, 1:选择P2.2 P2.3, 2:选择P6.2 P6.3, 
-//	PWMA_ENO   |= 0x04;		// IO输出允许,  bit7: ENO4N, bit6: ENO4P, bit5: ENO3N, bit4: ENO3P,  bit3: ENO2N,  bit2: ENO2P,  bit1: ENO1N,  bit0: ENO1P
-//	PWMA_IER   |= 0x04;		// 使能中断
-
-	PWMA_CCMR3  = 0x68;		// 通道模式配置, PWM模式1, 预装载允许
-	PWMA_CCR3   = 0;		// 比较值, 控制占空比(高电平时钟数)
-	PWMA_CCER2 |= 0x05;		// 开启比较输出, 高电平有效
-	PWMA_PS    |= (0<<4);	// 选择IO, 0:选择P1.4 P1.5, 1:选择P2.4 P2.5, 2:选择P6.4 P6.5, 
-//	PWMA_ENO   |= 0x10;		// IO输出允许,  bit7: ENO4N, bit6: ENO4P, bit5: ENO3N, bit4: ENO3P,  bit3: ENO2N,  bit2: ENO2P,  bit1: ENO1N,  bit0: ENO1P
-//	PWMA_IER   |= 0x08;		// 使能中断
-
-	PWMA_BKR    = 0x80;		// 主输出使能 相当于总开关
-	PWMA_CR1    = 0x81;		// 使能计数器, 允许自动重装载寄存器缓冲, 边沿对齐模式, 向上计数,  bit7=1:写自动重装载寄存器缓冲(本周期不会被打扰), =0:直接写自动重装载寄存器本(周期可能会乱掉)
-	PWMA_EGR    = 0x01;		//产生一次更新事件, 清除计数器和与分频计数器, 装载预分频寄存器的值
-//	PWMA_ISR_En = PWMA_IER;	//设置标志允许通道1~4中断处理
+	
+	//配置选通引脚为推挽输出，M0相应bit为1，M1相应bit为0
+	P1M0 |= 0x3f; //0x3f = 0B0011 1111，bit0~bit5置1
+	P1M1 &= ~0x3f; //~0x3f = 0B1100 0000,bit0~bit5置0
+	
+	PWMA_PSCR = 3;	//PWMA_PSCR为PWMA的16位预分频器寄存器，可以16位数据读写，f_ck_int = f_ck_psc/(PSCR[15:0]+1)
+	PWMA_DTR = 24;	//PWMA_DTR位PWMA的死区寄存器，设置死区持续时间，本程序死区互补功能未开
+	
+	PWMA_ARR = 0xff;	//PWMA_ARR为PWMA的16位自动重载寄存器
+	PWMA_CCER1 = 0;	//捕获/比较使能寄存器1，配置极性及输出使能
+	PWMA_CCER2 = 0;	//捕获/比较使能寄存器2，配置极性及输出使能
+	PWMA_SR1 = 0;		//状态寄存器1，中断标记
+	PWMA_SR2 = 0;		//状态寄存器2，重复捕获标记
+	PWMA_ENO = 0;		//输出使能寄存器
+	PWMA_PS = 0;		//功能脚切换
+	PWMA_IER = 0;		//中断使能寄存器
+	
+	PWMA_CCMR1 = 0x68;	//捕获/比较模式寄存器1，0x68 = 0b0110 1000配置为输出，开启预装载，PWM模式1
+	PWMA_CCR1 = 0x00;			//捕获/比较寄存器，16位，当前比较值
+	PWMA_CCER1 |= 0x01;	//捕获/比较使能寄存器1，原0x05 = 0b0000 0101,现改为0x01，使能OC1输出
+	PWMA_PS |= 0;				//PWMA IO选择
+	
+	PWMA_CCMR2 = 0x68;	//捕获/比较模式寄存器2，0x68 = 0b0110 1000配置为输出，开启预装载，PWM模式1
+	PWMA_CCR2 = 0x00;			//捕获/比较寄存器，16位，当前比较值，与PWMA_ARR比较
+	PWMA_CCER1 |= 0x10;	//捕获/比较使能寄存器1，原0x50 = 0b0101 0000，现改为0x10，使能OC2输出
+	PWMA_PS |= (0<<2);	//PWMA IO选择
+	
+	PWMA_CCMR3 = 0x68;	//捕获/比较模式寄存器3，0x68 = 0b0110 1000配置为输出，开启预装载，PWM模式1
+	PWMA_CCR3 = 0x00;			//捕获/比较寄存器，16位，当前比较值
+	PWMA_CCER2 |= 0x01;	//捕获/比较使能寄存器2，原0x05 = 0b0000 0101,现改为0x01，使能OC3输出
+	PWMA_PS |= (0<<4);	//PWMA IO选择
+	
+	PWMA_BKR = 0x80;	//使能OC和OCN输出
+	PWMA_CR1 = 0x81;	//控制寄存器1，使能自动预装载，边沿对齐，向上计数，使能计数器
+	PWMA_EGR = 0x01;	//初始化计数器
 }
 
 //	PWMA_PS   = (0<<6)+(0<<4)+(0<<2)+0;	//选择IO, 4项从高到低(从左到右)对应PWM1 PWM2 PWM3 PWM4, 0:选择P1.x, 1:选择P2.x, 2:选择P6.x, 
@@ -369,13 +359,10 @@ void StartMotor(void)
 void main(void)
 {
 	u8	i;
-	u16	j;
 	
 	P2n_standard(0xf8);
 	P3n_standard(0xbf);
 	P5n_standard(0x10);
-	
-	adc11 = 0;
 	
 	PWMA_config();
 	ADC_config();
@@ -388,7 +375,6 @@ void main(void)
 
 	EA  = 1; // 打开总中断
 
-	
 	while (1)
 	{
 		if(B_4ms)		// 4ms时隙
@@ -447,12 +433,9 @@ void main(void)
 			}
 			else
 			{
-				adc11 = ((adc11 *7)>>3) + Get_ADC10bitResult(11);
-			}
-			
-			j = adc11;
-			if(j != adc11)	j = adc11;
-			PWW_Set = (u8)(j >> 5);	//油门是8位的
+				//adc11 = ((adc11 *7)>>3) + Get_ADC10bitResult(11);
+			}	
+			PWW_Set = 100;
 		}
 	}
 }
