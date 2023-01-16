@@ -6,6 +6,11 @@
 #include "pwm.h"
 #include "encoder.h"
 
+#define WID_UP 2500
+#define WID_DOWN 500
+#define WID_DEFAULT WID_DOWN
+u8 count_tmp;
+u32 wid;
 
 void main(void)
 {
@@ -26,27 +31,31 @@ void main(void)
 	PwmInit();
 	Int0_Init();
 	
+	wid = WID_DEFAULT;
 	OLED_Init();
 	OLED_Clear();
-	OLED_ShowString(30,0,"OLED TEST");
-	OLED_ShowString(8,2,"ZHONGJINGYUAN");  
-	OLED_ShowString(20,4,"2014/05/01");  
-	OLED_ShowString(0,6,"ASCII:");  
+	OLED_ShowString(8,0,"MODE:SERVO");
+	OLED_ShowString(8,2,"Freq(Hz):50");
+	OLED_ShowString(8,4,"Wid(us):      ");
+	OLED_ShowNum(79,4,wid,4,16);
+	OLED_ShowString(8,6,"Out: ON"); 
 	
 	EA = 1; //使能总中断
 	while(1)
 	{
 		if(encoder_flag)
 		{
+			count_tmp = count;
 			encoder_flag = 0;
-			if(encoder_counter>0)
-				OLED_ShowString(63,6,"UP  ");
-			else if(encoder_counter<0)
-				OLED_ShowString(63,6,"DOWN");
+			if(up_flag)
+				wid += 50;
 			else
-				OLED_ShowString(63,6,"NONE");
-			encoder_counter = 0;
+				wid -= 50;
+			if(wid > WID_UP) wid = WID_UP;
+			if(wid < WID_DOWN) wid = WID_DOWN;
+			OLED_ShowString(8,4,"Wid(us):      ");
+			OLED_ShowNum(79,4,wid,4,16);
+			PwmSetHighUs(wid,wid,wid);
 		}
-		Delay_n_ms(5);
 	}
 }

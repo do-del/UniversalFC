@@ -1,9 +1,9 @@
-BL51 BANKED LINKER/LOCATER V6.22.2.0                                                    01/16/2023  09:21:50  PAGE 1
+BL51 BANKED LINKER/LOCATER V6.22.2.0                                                    01/16/2023  21:40:02  PAGE 1
 
 
 BL51 BANKED LINKER/LOCATER V6.22.2.0, INVOKED BY:
-C:\KEIL_C51\C51\BIN\BL51.EXE .\Objects\STARTUP.obj, .\Objects\main.obj TO .\Objects\STC8H1K17_ESC_TEST PRINT (.\Listings
->> \STC8H1K17_ESC_TEST.m51) RAMSIZE (256)
+D:\KEIL51\C51\BIN\BL51.EXE .\Objects\STARTUP.obj, .\Objects\main.obj TO .\Objects\STC8H1K17_ESC_TEST PRINT (.\Listings\S
+>> TC8H1K17_ESC_TEST.m51) RAMSIZE (256)
 
 
 MEMORY MODEL: SMALL
@@ -12,9 +12,9 @@ MEMORY MODEL: SMALL
 INPUT MODULES INCLUDED:
   .\Objects\STARTUP.obj (?C_STARTUP)
   .\Objects\main.obj (MAIN)
-  C:\KEIL_C51\C51\LIB\C51S.LIB (?C?CLDPTR)
-  C:\KEIL_C51\C51\LIB\C51S.LIB (?C?UIDIV)
-  C:\KEIL_C51\C51\LIB\C51S.LIB (?C?ULSHR)
+  D:\KEIL51\C51\LIB\C51S.LIB (?C?CLDPTR)
+  D:\KEIL51\C51\LIB\C51S.LIB (?C?UIDIV)
+  D:\KEIL51\C51\LIB\C51S.LIB (?C?ULSHR)
 
 
 LINK MAP OF MODULE:  .\Objects\STC8H1K17_ESC_TEST (?C_STARTUP)
@@ -29,8 +29,8 @@ LINK MAP OF MODULE:  .\Objects\STC8H1K17_ESC_TEST (?C_STARTUP)
                     0011H     000FH                  *** GAP ***
             BIT     0020H.0   0000H.7   UNIT         ?BI?MAIN
                     0020H.7   0000H.1                *** GAP ***
-            DATA    0021H     0043H     UNIT         ?DT?MAIN
-            IDATA   0064H     0001H     UNIT         ?STACK
+            DATA    0021H     0044H     UNIT         ?DT?MAIN
+            IDATA   0065H     0001H     UNIT         ?STACK
 
             * * * * * * *   C O D E   M E M O R Y   * * * * * * *
             CODE    0000H     0003H     ABSOLUTE     
@@ -59,7 +59,7 @@ LINK MAP OF MODULE:  .\Objects\STC8H1K17_ESC_TEST (?C_STARTUP)
             CODE    0566H     0057H     UNIT         ?PR?PWMB_ISR?MAIN
             CODE    05BDH     0054H     UNIT         ?PR?TIMER4_ISR?MAIN
             CODE    0611H     004EH     UNIT         ?PR?PWMB_CONFIG?MAIN
-BL51 BANKED LINKER/LOCATER V6.22.2.0                                                  01/16/2023  09:21:50  PAGE 2
+BL51 BANKED LINKER/LOCATER V6.22.2.0                                                  01/16/2023  21:40:02  PAGE 2
 
 
             CODE    065FH     0032H     UNIT         ?PR?UARTISR?MAIN
@@ -119,7 +119,7 @@ SEGMENT                          DATA_GROUP
   +--> ?PR?MOTOR_STEP?MAIN
 
 
-BL51 BANKED LINKER/LOCATER V6.22.2.0                                                  01/16/2023  09:21:50  PAGE 3
+BL51 BANKED LINKER/LOCATER V6.22.2.0                                                  01/16/2023  21:40:02  PAGE 3
 
 
 
@@ -130,7 +130,7 @@ SYMBOL TABLE OF MODULE:  .\Objects\STC8H1K17_ESC_TEST (?C_STARTUP)
 
   -------         MODULE        ?C_STARTUP
   C:0779H         SEGMENT       ?C_C51STARTUP
-  I:0064H         SEGMENT       ?STACK
+  I:0065H         SEGMENT       ?STACK
   C:0000H         PUBLIC        ?C_STARTUP
   D:00E0H         SYMBOL        ACC
   D:00F0H         SYMBOL        B
@@ -179,7 +179,7 @@ SYMBOL TABLE OF MODULE:  .\Objects\STC8H1K17_ESC_TEST (?C_STARTUP)
   D:0021H         PUBLIC        PWM_Set
   D:00CAH         PUBLIC        P5M0
   D:00B0H         PUBLIC        P3
-BL51 BANKED LINKER/LOCATER V6.22.2.0                                                  01/16/2023  09:21:50  PAGE 4
+BL51 BANKED LINKER/LOCATER V6.22.2.0                                                  01/16/2023  21:40:02  PAGE 4
 
 
   C:0091H         PUBLIC        Timer0_ISR
@@ -235,14 +235,15 @@ SYMBOL TABLE OF MODULE:  .\Objects\STC8H1K17_ESC_TEST (?C_STARTUP)
   D:008EH         PUBLIC        AUXR
   B:0020H.3       PUBLIC        busy
   B:00A8H.1       PUBLIC        ET0
+  D:003EH         PUBLIC        ch
   D:008CH         PUBLIC        TH0
-  D:003EH         PUBLIC        pwmb_cap
+  D:003FH         PUBLIC        pwmb_cap
   C:065FH         PUBLIC        UartIsr
+BL51 BANKED LINKER/LOCATER V6.22.2.0                                                  01/16/2023  21:40:02  PAGE 5
+
+
   D:00D6H         PUBLIC        T2H
-BL51 BANKED LINKER/LOCATER V6.22.2.0                                                  01/16/2023  09:21:50  PAGE 5
-
-
-  D:0040H         PUBLIC        wptr
+  D:0041H         PUBLIC        wptr
   D:00D4H         PUBLIC        T3H
   D:00D2H         PUBLIC        T4H
   D:008AH         PUBLIC        TL0
@@ -250,10 +251,10 @@ SYMBOL TABLE OF MODULE:  .\Objects\STC8H1K17_ESC_TEST (?C_STARTUP)
   B:0020H.4       PUBLIC        m_running
   D:00D5H         PUBLIC        T3L
   D:00D3H         PUBLIC        T4L
-  D:0041H         PUBLIC        PWM_Value
+  D:0042H         PUBLIC        PWM_Value
   B:0088H.4       PUBLIC        TR0
   C:0728H         PUBLIC        Uart_Config
-  D:0042H         PUBLIC        phase_time_tmp
+  D:0043H         PUBLIC        phase_time_tmp
   C:06C9H         PUBLIC        _delay_us
   D:00D1H         PUBLIC        T4T3M
   C:00AEH         PUBLIC        _UartSendStr
@@ -263,10 +264,10 @@ SYMBOL TABLE OF MODULE:  .\Objects\STC8H1K17_ESC_TEST (?C_STARTUP)
   C:0611H         PUBLIC        PWMB_Config
   C:074BH         PUBLIC        Timer4_Config
   B:0020H.5       PUBLIC        pwmb_it_flag
-  D:0052H         PUBLIC        pwmb_cap_res
+  D:0053H         PUBLIC        pwmb_cap_res
   D:00D0H         PUBLIC        PSW
   B:0020H.6       PUBLIC        pwmb_up_flag
-  D:0054H         PUBLIC        buffer
+  D:0055H         PUBLIC        buffer
   D:0094H         PUBLIC        P0M0
   -------         PROC          UARTISR
   C:065FH         LINE#         11
@@ -298,10 +299,10 @@ SYMBOL TABLE OF MODULE:  .\Objects\STC8H1K17_ESC_TEST (?C_STARTUP)
   -------         PROC          _UARTSEND
   D:0007H         SYMBOL        dat
   C:0003H         LINE#         37
+BL51 BANKED LINKER/LOCATER V6.22.2.0                                                  01/16/2023  21:40:02  PAGE 6
+
+
   C:0003H         LINE#         38
-BL51 BANKED LINKER/LOCATER V6.22.2.0                                                  01/16/2023  09:21:50  PAGE 6
-
-
   C:0003H         LINE#         39
   C:0006H         LINE#         40
   C:0008H         LINE#         41
@@ -358,10 +359,10 @@ SYMBOL TABLE OF MODULE:  .\Objects\STC8H1K17_ESC_TEST (?C_STARTUP)
   -------         PROC          PWMB_CONFIG
   C:0611H         LINE#         73
   C:0611H         LINE#         74
+BL51 BANKED LINKER/LOCATER V6.22.2.0                                                  01/16/2023  21:40:02  PAGE 7
+
+
   C:0611H         LINE#         76
-BL51 BANKED LINKER/LOCATER V6.22.2.0                                                  01/16/2023  09:21:50  PAGE 7
-
-
   C:0614H         LINE#         77
   C:0617H         LINE#         78
   C:061EH         LINE#         80
@@ -418,10 +419,10 @@ SYMBOL TABLE OF MODULE:  .\Objects\STC8H1K17_ESC_TEST (?C_STARTUP)
   -------         PROC          _DELAY_US
   D:0007H         SYMBOL        us
   C:06C9H         LINE#         17
+BL51 BANKED LINKER/LOCATER V6.22.2.0                                                  01/16/2023  21:40:02  PAGE 8
+
+
   C:06C9H         LINE#         18
-BL51 BANKED LINKER/LOCATER V6.22.2.0                                                  01/16/2023  09:21:50  PAGE 8
-
-
   C:06C9H         LINE#         20
   C:06C9H         LINE#         21
   C:06CAH         LINE#         22
@@ -478,10 +479,10 @@ SYMBOL TABLE OF MODULE:  .\Objects\STC8H1K17_ESC_TEST (?C_STARTUP)
   C:03DEH         LINE#         76
   C:03E2H         LINE#         77
   C:03E5H         LINE#         78
+BL51 BANKED LINKER/LOCATER V6.22.2.0                                                  01/16/2023  21:40:02  PAGE 9
+
+
   C:03E7H         LINE#         79
-BL51 BANKED LINKER/LOCATER V6.22.2.0                                                  01/16/2023  09:21:50  PAGE 9
-
-
   C:03EAH         LINE#         80
   C:03EFH         LINE#         81
   C:03EFH         LINE#         82
@@ -538,10 +539,10 @@ SYMBOL TABLE OF MODULE:  .\Objects\STC8H1K17_ESC_TEST (?C_STARTUP)
   C:0040H         LINE#         130
   C:0045H         LINE#         132
   C:0049H         LINE#         134
+BL51 BANKED LINKER/LOCATER V6.22.2.0                                                  01/16/2023  21:40:02  PAGE 10
+
+
   C:0049H         LINE#         135
-BL51 BANKED LINKER/LOCATER V6.22.2.0                                                  01/16/2023  09:21:50  PAGE 10
-
-
   C:0049H         LINE#         136
   C:005FH         LINE#         137
   C:0074H         LINE#         138
@@ -598,10 +599,10 @@ SYMBOL TABLE OF MODULE:  .\Objects\STC8H1K17_ESC_TEST (?C_STARTUP)
   C:05CFH         LINE#         63
   C:05D8H         LINE#         64
   C:05D8H         LINE#         65
+BL51 BANKED LINKER/LOCATER V6.22.2.0                                                  01/16/2023  21:40:02  PAGE 11
+
+
   C:05DBH         LINE#         66
-BL51 BANKED LINKER/LOCATER V6.22.2.0                                                  01/16/2023  09:21:50  PAGE 11
-
-
   C:05DEH         LINE#         67
   C:05DEH         LINE#         68
   C:05EEH         LINE#         69
@@ -658,10 +659,10 @@ SYMBOL TABLE OF MODULE:  .\Objects\STC8H1K17_ESC_TEST (?C_STARTUP)
   C:0342H         LINE#         56
   C:0342H         LINE#         57
   C:0345H         LINE#         58
+BL51 BANKED LINKER/LOCATER V6.22.2.0                                                  01/16/2023  21:40:02  PAGE 12
+
+
   C:0345H         LINE#         59
-BL51 BANKED LINKER/LOCATER V6.22.2.0                                                  01/16/2023  09:21:50  PAGE 12
-
-
   C:0358H         LINE#         60
   C:035CH         LINE#         62
   C:035FH         LINE#         63
@@ -702,30 +703,30 @@ SYMBOL TABLE OF MODULE:  .\Objects\STC8H1K17_ESC_TEST (?C_STARTUP)
   D:0009H         SYMBOL        j
   D:000AH         SYMBOL        sum
   -------         ENDDO         
-  C:00DEH         LINE#         39
   C:00DEH         LINE#         40
-  C:00DEH         LINE#         45
-  C:00E1H         LINE#         47
-  C:00E4H         LINE#         49
-  C:00E7H         LINE#         50
-  C:00EAH         LINE#         51
-  C:00EDH         LINE#         52
-  C:00F0H         LINE#         53
-  C:00F3H         LINE#         54
-  C:00F6H         LINE#         56
-  C:00F9H         LINE#         58
-  C:00FCH         LINE#         59
-  C:00FEH         LINE#         61
-  C:0101H         LINE#         62
-  C:0103H         LINE#         63
-  C:0105H         LINE#         65
-BL51 BANKED LINKER/LOCATER V6.22.2.0                                                  01/16/2023  09:21:50  PAGE 13
+  C:00DEH         LINE#         41
+  C:00DEH         LINE#         46
+  C:00E1H         LINE#         48
+  C:00E4H         LINE#         50
+  C:00E7H         LINE#         51
+  C:00EAH         LINE#         52
+  C:00EDH         LINE#         53
+  C:00F0H         LINE#         54
+  C:00F3H         LINE#         55
+  C:00F6H         LINE#         57
+  C:00F9H         LINE#         59
+  C:00FCH         LINE#         60
+  C:00FEH         LINE#         62
+  C:0101H         LINE#         63
+  C:0103H         LINE#         64
+BL51 BANKED LINKER/LOCATER V6.22.2.0                                                  01/16/2023  21:40:02  PAGE 13
 
 
-  C:010AH         LINE#         66
-  C:0111H         LINE#         67
-  C:0116H         LINE#         69
-  C:0118H         LINE#         71
+  C:0105H         LINE#         66
+  C:010AH         LINE#         67
+  C:0111H         LINE#         68
+  C:0116H         LINE#         70
+  C:0118H         LINE#         72
   C:0121H         LINE#         74
   C:0121H         LINE#         75
   C:0121H         LINE#         76
@@ -750,77 +751,77 @@ SYMBOL TABLE OF MODULE:  .\Objects\STC8H1K17_ESC_TEST (?C_STARTUP)
   C:0154H         LINE#         96
   C:0154H         LINE#         97
   C:0162H         LINE#         98
-  C:0162H         LINE#         99
-  C:0164H         LINE#         100
-  C:0182H         LINE#         101
-  C:0185H         LINE#         102
-  C:0187H         LINE#         103
-  C:018AH         LINE#         104
-  C:018DH         LINE#         105
-  C:0197H         LINE#         106
-  C:019AH         LINE#         107
-  C:019CH         LINE#         108
-  C:01A1H         LINE#         109
-  C:01A6H         LINE#         110
-  C:01A9H         LINE#         111
+  C:0162H         LINE#         100
+  C:0164H         LINE#         101
+  C:0182H         LINE#         102
+  C:0185H         LINE#         103
+  C:0187H         LINE#         104
+  C:018AH         LINE#         105
+  C:018DH         LINE#         106
+  C:0197H         LINE#         107
+  C:019AH         LINE#         108
+  C:019CH         LINE#         109
+  C:01A1H         LINE#         110
+  C:01A6H         LINE#         111
   C:01A9H         LINE#         112
-  C:01ACH         LINE#         113
+  C:01A9H         LINE#         113
   C:01ACH         LINE#         114
-  C:01B5H         LINE#         115
-  C:01BEH         LINE#         116
-  C:01C9H         LINE#         117
-  C:01C9H         LINE#         118
-  C:01CBH         LINE#         119
-  C:01CEH         LINE#         120
-  C:01D1H         LINE#         121
-  C:01D5H         LINE#         122
-  C:01D7H         LINE#         123
-  C:01D9H         LINE#         124
-  C:01DBH         LINE#         125
-  C:01DBH         LINE#         126
-  C:01E1H         LINE#         127
-BL51 BANKED LINKER/LOCATER V6.22.2.0                                                  01/16/2023  09:21:50  PAGE 14
+  C:01ACH         LINE#         116
+  C:01B5H         LINE#         117
+  C:01BEH         LINE#         118
+  C:01C9H         LINE#         119
+  C:01C9H         LINE#         120
+  C:01CBH         LINE#         121
+  C:01CEH         LINE#         122
+  C:01D1H         LINE#         123
+  C:01D5H         LINE#         124
+  C:01D7H         LINE#         125
+  C:01D9H         LINE#         126
+  C:01DBH         LINE#         127
+  C:01DBH         LINE#         128
+BL51 BANKED LINKER/LOCATER V6.22.2.0                                                  01/16/2023  21:40:02  PAGE 14
 
 
-  C:01E5H         LINE#         128
-  C:01E9H         LINE#         129
+  C:01E1H         LINE#         129
+  C:01E5H         LINE#         130
   C:01E9H         LINE#         131
-  C:01F5H         LINE#         132
-  C:01F7H         LINE#         133
-  C:01FAH         LINE#         134
-  C:0210H         LINE#         135
-  C:0210H         LINE#         136
-  C:0233H         LINE#         137
-  C:0237H         LINE#         138
-  C:0248H         LINE#         139
-  C:0253H         LINE#         140
-  C:0253H         LINE#         141
-  C:0256H         LINE#         142
-  C:0259H         LINE#         143
-  C:0264H         LINE#         144
-  C:0264H         LINE#         145
-  C:0267H         LINE#         146
-  C:026AH         LINE#         147
-  C:0286H         LINE#         148
-  C:0286H         LINE#         149
-  C:029CH         LINE#         150
-  C:029CH         LINE#         151
+  C:01E9H         LINE#         133
+  C:01F5H         LINE#         134
+  C:01F7H         LINE#         135
+  C:01FAH         LINE#         136
+  C:0210H         LINE#         137
+  C:0210H         LINE#         138
+  C:0233H         LINE#         139
+  C:0237H         LINE#         140
+  C:0248H         LINE#         141
+  C:0253H         LINE#         142
+  C:0253H         LINE#         143
+  C:0256H         LINE#         144
+  C:0259H         LINE#         145
+  C:0264H         LINE#         146
+  C:0264H         LINE#         147
+  C:0267H         LINE#         148
+  C:026AH         LINE#         149
+  C:0286H         LINE#         150
+  C:0286H         LINE#         151
   C:029CH         LINE#         152
+  C:029CH         LINE#         154
+  C:029CH         LINE#         155
   -------         ENDPROC       MAIN
   -------         PROC          PORT_INIT
-  C:0712H         LINE#         155
-  C:0712H         LINE#         156
-  C:0712H         LINE#         157
-  C:0715H         LINE#         158
-  C:0717H         LINE#         159
-  C:0719H         LINE#         160
-  C:071BH         LINE#         161
-  C:071DH         LINE#         162
-  C:071FH         LINE#         163
-  C:0721H         LINE#         164
-  C:0723H         LINE#         165
-  C:0725H         LINE#         166
-  C:0727H         LINE#         167
+  C:0712H         LINE#         158
+  C:0712H         LINE#         159
+  C:0712H         LINE#         160
+  C:0715H         LINE#         161
+  C:0717H         LINE#         162
+  C:0719H         LINE#         163
+  C:071BH         LINE#         164
+  C:071DH         LINE#         165
+  C:071FH         LINE#         166
+  C:0721H         LINE#         167
+  C:0723H         LINE#         168
+  C:0725H         LINE#         169
+  C:0727H         LINE#         170
   -------         ENDPROC       PORT_INIT
   -------         ENDMOD        MAIN
 
@@ -836,5 +837,5 @@ SYMBOL TABLE OF MODULE:  .\Objects\STC8H1K17_ESC_TEST (?C_STARTUP)
   C:0553H         PUBLIC        ?C?ULSHR
   -------         ENDMOD        ?C?ULSHR
 
-Program Size: data=85.7 xdata=0 code=1902
+Program Size: data=86.7 xdata=0 code=1902
 LINK/LOCATE RUN COMPLETE.  0 WARNING(S),  0 ERROR(S)

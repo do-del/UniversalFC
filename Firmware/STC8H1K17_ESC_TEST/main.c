@@ -33,6 +33,7 @@
 
 u16 cap_res_g[8];
 u16 cap_res_lp;
+u8 ch;
 
 void Port_Init(void);	//芯片复位后引脚初始化
 
@@ -70,7 +71,6 @@ void main(void)
 	
 	UartSendStr("--Brushless ESC Test--\r\n");
 	
-	
 	while(1)
 	{
 		if(t0_flag)
@@ -96,6 +96,7 @@ void main(void)
 			}
 			if(!m_running && (PWM_Set >= D_START_PWM))
 			{
+				//UartSendStr("-Start-\r\n");
 				m_starting = 1;
 				for(i = 0;i<8;i++) phase_time_tmp[i] = 400; 
 				Motor_Start();
@@ -111,6 +112,7 @@ void main(void)
 			}
 			if(m_running)
 			{
+				//UartSendStr("-Run-\r\n");
 				if(PWM_Value < PWM_Set) PWM_Value++;
 				if(PWM_Value > PWM_Set) PWM_Value--;
 				if(PWM_Value<(D_START_PWM-5))
@@ -135,7 +137,7 @@ void main(void)
 			{
 				sum += cap_res_g[i];
 			}
-			cap_res_lp = sum>>4;
+			cap_res_lp = sum>>3;
 			if(cap_res_lp<1100)
 			{
 				PWM_Set = 25;
@@ -147,7 +149,8 @@ void main(void)
 			else if((cap_res_lp>=1100) && (cap_res_lp <= 1900))
 			{
 				PWM_Set = (u8)((cap_res_lp - 1000)>>2);
-			}		
+			}
+			
 		}
 	}
 }
