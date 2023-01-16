@@ -48,33 +48,7 @@ void UartSendStr(char *p)
 		UartSend(*p++);
 	}
 }
-/*
-void UartSendNum(u32 num)
-{
-	char buf[20];
-	u8 dat;
-	u8 i = 0;
-	
-	if(num<0)
-	{
-		UartSend('-');
-		num = -num;
-	}
-	
-	if(num == 0)
-	{
-		UartSend('0');
-	}
-	while(num)
-	{
-		dat = num%10;
-		buf[i] = dat + 0x30;
-		num /= 10;
-		i++;
-	}
-	UartSendStr(buf);
-}
-*/
+
 /*
 void UartRxTest(void)
 {

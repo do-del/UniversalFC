@@ -29,8 +29,9 @@
 #include "motor.h"
 #include "timer.h"
 #include "cmp.h"
+#include "beep.h"
 
-u16 cap_res_g[16];
+u16 cap_res_g[8];
 u16 cap_res_lp;
 
 void Port_Init(void);	//芯片复位后引脚初始化
@@ -62,12 +63,13 @@ void main(void)
 	timeout = 0;
 	
 	Delay_n_ms(250);
+	beep_1KHz(500);
 	Delay_n_ms(250);
+	
 	EA = 1;	//打开总中断
 	
 	UartSendStr("--Brushless ESC Test--\r\n");
 	
-	//PWMA_ENO = 0x15; //0x15 = 0b0001 0101，测试PWMA功能，使能PWM1P，PWM2P，PWM3P输出
 	
 	while(1)
 	{
@@ -94,7 +96,6 @@ void main(void)
 			}
 			if(!m_running && (PWM_Set >= D_START_PWM))
 			{
-				//UartSendStr("-start-\r\n");
 				m_starting = 1;
 				for(i = 0;i<8;i++) phase_time_tmp[i] = 400; 
 				Motor_Start();
@@ -110,7 +111,6 @@ void main(void)
 			}
 			if(m_running)
 			{
-				//UartSendStr("-run-\r\n");
 				if(PWM_Value < PWM_Set) PWM_Value++;
 				if(PWM_Value > PWM_Set) PWM_Value--;
 				if(PWM_Value<(D_START_PWM-5))
@@ -130,8 +130,8 @@ void main(void)
 			
 			cap_res_g[j] = pwmb_cap_res;
 			j++;
-			j &= 0x0f;
-			for(sum = 0,i = 0;i<16;i++)
+			j &= 0x07;
+			for(sum = 0,i = 0;i<8;i++)
 			{
 				sum += cap_res_g[i];
 			}
@@ -142,43 +142,12 @@ void main(void)
 			}
 			else if(cap_res_lp>1900)
 			{
-				UartSendStr("over\r\n");
 				PWM_Set = 230;
 			}
 			else if((cap_res_lp>=1100) && (cap_res_lp <= 1900))
 			{
-				UartSendStr("enable\r\n");
 				PWM_Set = (u8)((cap_res_lp - 1000)>>2);
-			}
-			
-			
-			if(pwmb_it_flag)
-			{
-				u8 ch;
-				u16 tmp;
-				pwmb_it_flag = 0;
-				UartSend(0xff);
-				/*
-				tmp = dtmp;
-				ch = (u8)(tmp>>8);
-				UartSend(ch);
-				ch = (u8)tmp;
-				UartSend(ch);
-				tmp = uptmp;
-				ch = (u8)(tmp>>8);
-				UartSend(ch);
-				ch = (u8)tmp;
-				UartSend(ch);
-				*/
-				tmp = cap_res_lp;
-				ch = (u8)(tmp>>8);
-				UartSend(ch);
-				ch = (u8)tmp;
-				UartSend(ch);
-				
-				UartSend(0xff);
-			}
-			
+			}		
 		}
 	}
 }

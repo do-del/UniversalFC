@@ -1,10 +1,10 @@
-C51 COMPILER V9.60.0.0   MAIN                                                              01/15/2023 19:33:59 PAGE 1   
+C51 COMPILER V9.60.0.0   MAIN                                                              01/16/2023 09:21:50 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE MAIN
 OBJECT MODULE PLACED IN .\Objects\main.obj
-COMPILER INVOKED BY: D:\Keil51\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main.
-                    -lst) TABS(2) OBJECT(.\Objects\main.obj)
+COMPILER INVOKED BY: C:\Keil_c51\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\mai
+                    -n.lst) TABS(2) OBJECT(.\Objects\main.obj)
 
 line level    source
 
@@ -39,94 +39,94 @@ line level    source
   29          #include "motor.h"
   30          #include "timer.h"
   31          #include "cmp.h"
-  32          
-  33          u16 cap_res_g[16];
-  34          u16 cap_res_lp;
-  35          
-  36          void Port_Init(void); //芯片复位后引脚初始化
-  37          
-  38          void main(void)
-  39          {
-  40   1        u8  i;
-  41   1        u8 j;
-  42   1        u32 sum;
-  43   1        
-  44   1        P_SW2 |= 0x80; //使能XFR
-  45   1        
-  46   1        Port_Init();  //调用端口初始化函数
-  47   1        
-  48   1        PWMA_Config();  //调用PWMA初始化函数
-  49   1        ADC_Config(); //调用ADC初始化函数
-  50   1        CMP_Config(); //调用模拟比较器初始化函数
-  51   1        Timer0_Config();  //调用定时器0初始化函数
-  52   1        Timer3_Config();  //调用定时器3初始化函数
-  53   1        Timer4_Config();  //调用定时器4初始化函数
-  54   1      
-C51 COMPILER V9.60.0.0   MAIN                                                              01/15/2023 19:33:59 PAGE 2   
+  32          #include "beep.h"
+  33          
+  34          u16 cap_res_g[8];
+  35          u16 cap_res_lp;
+  36          
+  37          void Port_Init(void); //芯片复位后引脚初始化
+  38          
+  39          void main(void)
+  40          {
+  41   1        u8  i;
+  42   1        u8 j;
+  43   1        u32 sum;
+  44   1        
+  45   1        P_SW2 |= 0x80; //使能XFR
+  46   1        
+  47   1        Port_Init();  //调用端口初始化函数
+  48   1        
+  49   1        PWMA_Config();  //调用PWMA初始化函数
+  50   1        ADC_Config(); //调用ADC初始化函数
+  51   1        CMP_Config(); //调用模拟比较器初始化函数
+  52   1        Timer0_Config();  //调用定时器0初始化函数
+  53   1        Timer3_Config();  //调用定时器3初始化函数
+  54   1        Timer4_Config();  //调用定时器4初始化函数
+C51 COMPILER V9.60.0.0   MAIN                                                              01/16/2023 09:21:50 PAGE 2   
 
-  55   1        PWMB_Config();
-  56   1        
-  57   1        Uart_Config();  //调用串口初始化函数
-  58   1        ES = 1;
-  59   1        
-  60   1        PWM_Set = 0;
-  61   1        PWM_Value = 0;
-  62   1        timeout = 0;
-  63   1        
-  64   1        Delay_n_ms(250);
+  55   1      
+  56   1        PWMB_Config();
+  57   1        
+  58   1        Uart_Config();  //调用串口初始化函数
+  59   1        ES = 1;
+  60   1        
+  61   1        PWM_Set = 0;
+  62   1        PWM_Value = 0;
+  63   1        timeout = 0;
+  64   1        
   65   1        Delay_n_ms(250);
-  66   1        EA = 1; //打开总中断
-  67   1        
-  68   1        UartSendStr("--Brushless ESC Test--\r\n");
-  69   1        
-  70   1        //PWMA_ENO = 0x15; //0x15 = 0b0001 0101，测试PWMA功能，使能PWM1P，PWM2P，PWM3P输出
-  71   1        
-  72   1        while(1)
-  73   1        {
-  74   2          if(t0_flag)
-  75   2          {
-  76   3            t0_flag = 0;
-  77   3            
-  78   3            if(timeout != 0)
-  79   3            {
-  80   4              if(--timeout == 0)
-  81   4              {
-  82   5                m_running = 0;
-  83   5                PWM_Value = 0;
-  84   5                CMPCR1 = 0x8c;
-  85   5                PWMA_ENO = 0;
-  86   5                PWMA_CCR1 = 0;
-  87   5                PWMA_CCR2 = 0;
-  88   5                PWMA_CCR3 = 0;
-  89   5                PWM1_L = 0;
-  90   5                PWM2_L = 0;
-  91   5                PWM3_L = 0;
-  92   5                Delay_n_ms(250);
-  93   5              }
-  94   4            }
-  95   3            if(!m_running && (PWM_Set >= D_START_PWM))
-  96   3            {
-  97   4              //UartSendStr("-start-\r\n");
-  98   4              m_starting = 1;
-  99   4              for(i = 0;i<8;i++) phase_time_tmp[i] = 400; 
- 100   4              Motor_Start();
- 101   4              m_starting = 0;
- 102   4              demagnetizing_cnt = 0;
- 103   4              CMPCR1 &= ~0x40;
- 104   4              if(step & 1)  CMPCR1 = 0xAC;    //上升沿中断
- 105   4              else      CMPCR1 = 0x9C;    //下降沿中断
- 106   4              m_running = 1;
- 107   4              Delay_n_ms(250);  //延时一下, 先启动起来
- 108   4              Delay_n_ms(250);
- 109   4              timeout = 125;    //启动超时时间 125*4 = 500ms
- 110   4            }
- 111   3            if(m_running)
- 112   3            {
- 113   4              //UartSendStr("-run-\r\n");
+  66   1        beep_1KHz(500);
+  67   1        Delay_n_ms(250);
+  68   1        
+  69   1        EA = 1; //打开总中断
+  70   1        
+  71   1        UartSendStr("--Brushless ESC Test--\r\n");
+  72   1        
+  73   1        
+  74   1        while(1)
+  75   1        {
+  76   2          if(t0_flag)
+  77   2          {
+  78   3            t0_flag = 0;
+  79   3            
+  80   3            if(timeout != 0)
+  81   3            {
+  82   4              if(--timeout == 0)
+  83   4              {
+  84   5                m_running = 0;
+  85   5                PWM_Value = 0;
+  86   5                CMPCR1 = 0x8c;
+  87   5                PWMA_ENO = 0;
+  88   5                PWMA_CCR1 = 0;
+  89   5                PWMA_CCR2 = 0;
+  90   5                PWMA_CCR3 = 0;
+  91   5                PWM1_L = 0;
+  92   5                PWM2_L = 0;
+  93   5                PWM3_L = 0;
+  94   5                Delay_n_ms(250);
+  95   5              }
+  96   4            }
+  97   3            if(!m_running && (PWM_Set >= D_START_PWM))
+  98   3            {
+  99   4              m_starting = 1;
+ 100   4              for(i = 0;i<8;i++) phase_time_tmp[i] = 400; 
+ 101   4              Motor_Start();
+ 102   4              m_starting = 0;
+ 103   4              demagnetizing_cnt = 0;
+ 104   4              CMPCR1 &= ~0x40;
+ 105   4              if(step & 1)  CMPCR1 = 0xAC;    //上升沿中断
+ 106   4              else      CMPCR1 = 0x9C;    //下降沿中断
+ 107   4              m_running = 1;
+ 108   4              Delay_n_ms(250);  //延时一下, 先启动起来
+ 109   4              Delay_n_ms(250);
+ 110   4              timeout = 125;    //启动超时时间 125*4 = 500ms
+ 111   4            }
+ 112   3            if(m_running)
+ 113   3            {
  114   4              if(PWM_Value < PWM_Set) PWM_Value++;
  115   4              if(PWM_Value > PWM_Set) PWM_Value--;
  116   4              if(PWM_Value<(D_START_PWM-5))
-C51 COMPILER V9.60.0.0   MAIN                                                              01/15/2023 19:33:59 PAGE 3   
+C51 COMPILER V9.60.0.0   MAIN                                                              01/16/2023 09:21:50 PAGE 3   
 
  117   4              {
  118   5                m_running = 0;
@@ -144,8 +144,8 @@ line level    source
  130   3            
  131   3            cap_res_g[j] = pwmb_cap_res;
  132   3            j++;
- 133   3            j &= 0x0f;
- 134   3            for(sum = 0,i = 0;i<16;i++)
+ 133   3            j &= 0x07;
+ 134   3            for(sum = 0,i = 0;i<8;i++)
  135   3            {
  136   4              sum += cap_res_g[i];
  137   4            }
@@ -156,73 +156,42 @@ line level    source
  142   4            }
  143   3            else if(cap_res_lp>1900)
  144   3            {
- 145   4              UartSendStr("over\r\n");
- 146   4              PWM_Set = 230;
- 147   4            }
- 148   3            else if((cap_res_lp>=1100) && (cap_res_lp <= 1900))
- 149   3            {
- 150   4              UartSendStr("enable\r\n");
- 151   4              PWM_Set = (u8)((cap_res_lp - 1000)>>2);
- 152   4            }
- 153   3            
- 154   3            
- 155   3            if(pwmb_it_flag)
- 156   3            {
- 157   4              u8 ch;
- 158   4              u16 tmp;
- 159   4              pwmb_it_flag = 0;
- 160   4              UartSend(0xff);
- 161   4              /*
- 162   4              tmp = dtmp;
- 163   4              ch = (u8)(tmp>>8);
- 164   4              UartSend(ch);
- 165   4              ch = (u8)tmp;
- 166   4              UartSend(ch);
- 167   4              tmp = uptmp;
- 168   4              ch = (u8)(tmp>>8);
- 169   4              UartSend(ch);
- 170   4              ch = (u8)tmp;
- 171   4              UartSend(ch);
- 172   4              */
- 173   4              tmp = cap_res_lp;
- 174   4              ch = (u8)(tmp>>8);
- 175   4              UartSend(ch);
- 176   4              ch = (u8)tmp;
- 177   4              UartSend(ch);
- 178   4              
-C51 COMPILER V9.60.0.0   MAIN                                                              01/15/2023 19:33:59 PAGE 4   
-
- 179   4              UartSend(0xff);
- 180   4            }
- 181   3            
- 182   3          }
- 183   2        }
- 184   1      }
- 185          
- 186          void Port_Init(void)
- 187          {
- 188   1        P0M0 = 0x00;
- 189   1        P0M1 = 0x00; //P0端口初始化为双向口
- 190   1        P1M0 = 0x00;
- 191   1        P1M1 = 0x00; //P1端口初始化为双向口
- 192   1        P2M0 = 0x00;
- 193   1        P2M1 = 0x00; //P2端口初始化为双向口
- 194   1        P3M0 = 0x00;
- 195   1        P3M1 = 0x00; //P3端口初始化为双向口
- 196   1        P5M0 = 0x00;
- 197   1        P5M0 = 0x00; //P5端口初始化为双向口
- 198   1      }
+ 145   4              PWM_Set = 230;
+ 146   4            }
+ 147   3            else if((cap_res_lp>=1100) && (cap_res_lp <= 1900))
+ 148   3            {
+ 149   4              PWM_Set = (u8)((cap_res_lp - 1000)>>2);
+ 150   4            }   
+ 151   3          }
+ 152   2        }
+ 153   1      }
+ 154          
+ 155          void Port_Init(void)
+ 156          {
+ 157   1        P0M0 = 0x00;
+ 158   1        P0M1 = 0x00; //P0端口初始化为双向口
+ 159   1        P1M0 = 0x00;
+ 160   1        P1M1 = 0x00; //P1端口初始化为双向口
+ 161   1        P2M0 = 0x00;
+ 162   1        P2M1 = 0x00; //P2端口初始化为双向口
+ 163   1        P3M0 = 0x00;
+ 164   1        P3M1 = 0x00; //P3端口初始化为双向口
+ 165   1        P5M0 = 0x00;
+ 166   1        P5M0 = 0x00; //P5端口初始化为双向口
+ 167   1      }
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =   1696    ----
-   CONSTANT SIZE    =     41    ----
+   CODE SIZE        =   1715    ----
+   CONSTANT SIZE    =     25    ----
    XDATA SIZE       =   ----    ----
    PDATA SIZE       =   ----    ----
-   DATA SIZE        =     83      12
+   DATA SIZE        =     67       9
    IDATA SIZE       =   ----    ----
    BIT SIZE         =      7    ----
 END OF MODULE INFORMATION.
+
+C51 COMPILER V9.60.0.0   MAIN                                                              01/16/2023 09:21:50 PAGE 4   
 
 
 C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

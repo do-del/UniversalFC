@@ -100,31 +100,6 @@ u16 dtmp;
 u16 uptmp;
 void PWMB_ISR(void) interrupt 27
 {
-	/*
-	if(PWMB_SR1 & 0x10)
-	{
-		PWMB_SR1 &= ~0x10; //清除捕获中断标志
-		
-		pwmb_cap = ((u16)PWMB_CCR8H<<8) | (u16)PWMB_CCR8L;
-		
-		if(pwmb_up_flag) //此时为下降沿
-		{
-			pwmb_it_flag = 1;
-			
-			pwmb_up_flag = 0;
-			dtmp = pwmb_cap;
-			uptmp = pwmb_cap_up;
-			pwmb_cap_res = (pwmb_cap - pwmb_cap_up)/24;
-			PWMB_CCER2 = 0x10;	//转为上升沿捕获
-		}
-		else
-		{
-			pwmb_up_flag = 1;
-			pwmb_cap_up = pwmb_cap; //记录上升沿时刻的计数值
-			PWMB_CCER2 = 0x30; //0b0011 0000，转为下降沿捕获
-		}
-	}
-	*/
 	if(PWMB_SR1 & 0x10)
 	{
 		PWMB_SR1 &=  ~0x10;
