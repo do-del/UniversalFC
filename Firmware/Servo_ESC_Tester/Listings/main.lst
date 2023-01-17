@@ -1,10 +1,10 @@
-C51 COMPILER V9.60.0.0   MAIN                                                              01/16/2023 21:10:46 PAGE 1   
+C51 COMPILER V9.60.0.0   MAIN                                                              01/17/2023 11:46:05 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE MAIN
 OBJECT MODULE PLACED IN .\Objects\main.obj
-COMPILER INVOKED BY: D:\Keil51\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main.
-                    -lst) TABS(2) OBJECT(.\Objects\main.obj)
+COMPILER INVOKED BY: C:\Keil_c51\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\mai
+                    -n.lst) TABS(2) OBJECT(.\Objects\main.obj)
 
 line level    source
 
@@ -19,69 +19,95 @@ line level    source
    9          #define WID_UP 2500
   10          #define WID_DOWN 500
   11          #define WID_DEFAULT WID_DOWN
-  12          u8 count_tmp;
-  13          u32 wid;
+  12          u32 wid;
+  13          bit en;
   14          
-  15          void main(void)
-  16          {
-  17   1        P_SW2 |= 0x80;
-  18   1        
-  19   1        P0M0 = 0x00;
-  20   1        P0M1 = 0x00;
-  21   1        P1M0 = 0x00;
-  22   1        P1M1 = 0x00;
-  23   1        P2M0 = 0x00;
-  24   1        P2M1 = 0x00;
-  25   1        P3M0 = 0x00;
-  26   1        P3M1 = 0x00;
-  27   1        P5M0 = 0x00;
-  28   1        P5M1 = 0x00;
-  29   1        
-  30   1        Timer0Init();
-  31   1        PwmInit();
-  32   1        Int0_Init();
-  33   1        
-  34   1        wid = WID_DEFAULT;
-  35   1        OLED_Init();
-  36   1        OLED_Clear();
-  37   1        OLED_ShowString(8,0,"MODE:SERVO");
-  38   1        OLED_ShowString(8,2,"Freq(Hz):50");
-  39   1        OLED_ShowString(8,4,"Wid(us):      ");
-  40   1        OLED_ShowNum(79,4,wid,4,16);
-  41   1        OLED_ShowString(8,6,"Out: ON"); 
-  42   1        
-  43   1        EA = 1; //使能总中断
-  44   1        while(1)
-  45   1        {
-  46   2          if(encoder_flag)
-  47   2          {
-  48   3            count_tmp = count;
-  49   3            encoder_flag = 0;
-  50   3            if(up_flag)
-  51   3              wid += 50;
-  52   3            else
-  53   3              wid -= 50;
-  54   3            if(wid > WID_UP) wid = WID_UP;
-C51 COMPILER V9.60.0.0   MAIN                                                              01/16/2023 21:10:46 PAGE 2   
+  15          u8 count_tmp;
+  16          
+  17          void main(void)
+  18          {
+  19   1        P_SW2 |= 0x80;
+  20   1        
+  21   1        P0M0 = 0x00;
+  22   1        P0M1 = 0x00;
+  23   1        P1M0 = 0x00;
+  24   1        P1M1 = 0x00;
+  25   1        P2M0 = 0x00;
+  26   1        P2M1 = 0x00;
+  27   1        P3M0 = 0x00;
+  28   1        P3M1 = 0x00;
+  29   1        P5M0 = 0x00;
+  30   1        P5M1 = 0x00;
+  31   1        
+  32   1        Timer0Init();
+  33   1        PwmInit();
+  34   1        Int0_Init();
+  35   1        
+  36   1        OLED_Init();
+  37   1        OLED_Clear();
+  38   1        
+  39   1        wid = WID_DEFAULT;
+  40   1        en = 1;
+  41   1        
+  42   1        OLED_ShowString(25,0,"--TESTER--");
+  43   1        OLED_ShowString(8,2,"Freq(Hz):  50");
+  44   1        OLED_ShowString(8,4,"Wid(us) :    ");
+  45   1        OLED_ShowNum(80,4,wid,4,16);
+  46   1        OLED_ShowString(8,6,"Output  :  ON"); 
+  47   1        
+  48   1        EA = 1; //使能总中断
+  49   1        while(1)
+  50   1        {
+  51   2          if(encoder_flag)
+  52   2          {
+  53   3            count_tmp = count;
+  54   3            encoder_flag = 0;
+C51 COMPILER V9.60.0.0   MAIN                                                              01/17/2023 11:46:05 PAGE 2   
 
-  55   3            if(wid < WID_DOWN) wid = WID_DOWN;
-  56   3            OLED_ShowString(8,4,"Wid(us):      ");
-  57   3            OLED_ShowNum(79,4,wid,4,16);
-  58   3            PwmSetHighUs(wid,wid,wid);
-  59   3          }
-  60   2        }
-  61   1      }
+  55   3            if(up_flag)
+  56   3              wid += 50;
+  57   3            else
+  58   3              wid -= 50;
+  59   3            if(wid > WID_UP) wid = WID_UP;
+  60   3            if(wid < WID_DOWN) wid = WID_DOWN;
+  61   3            OLED_ShowString(8,4,"Wid(us) :    ");
+  62   3            OLED_ShowNum(80,4,wid,4,16);
+  63   3            PwmSetHighUs(wid,wid,wid);
+  64   3          }
+  65   2          
+  66   2          if(!EC_KEY)
+  67   2          {
+  68   3            delay_ms(5);
+  69   3            if(!EC_KEY)
+  70   3            {
+  71   4              en = !en;
+  72   4              if(en)
+  73   4              {
+  74   5                OLED_ShowString(8,6,"Output  :  ON");
+  75   5                CR = 1; //启动PCA计时器
+  76   5              }
+  77   4              else
+  78   4              {
+  79   5                OLED_ShowString(8,6,"Output  : OFF");
+  80   5                CR = 0; //启动PCA计时器
+  81   5              }
+  82   4              while(!EC_KEY);
+  83   4            }
+  84   3          }
+  85   2          delay_ms(5);
+  86   2        }
+  87   1      }
 *** WARNING C294 IN LINE 157 OF main.c: unreachable code
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =   1350    ----
-   CONSTANT SIZE    =   2118    ----
+   CODE SIZE        =   1414    ----
+   CONSTANT SIZE    =   2139    ----
    XDATA SIZE       =   ----    ----
    PDATA SIZE       =   ----    ----
    DATA SIZE        =      6      33
    IDATA SIZE       =   ----    ----
-   BIT SIZE         =      2       2
+   BIT SIZE         =      3       2
 END OF MODULE INFORMATION.
 
 

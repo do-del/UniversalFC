@@ -30,20 +30,27 @@ void CMP_ISR(void) interrupt 21
 	
 	if(demagnetizing_cnt == 0) //消磁后检测过零事件，未消磁不处理比较器中断
 	{
-		T4T3M &= ~(1<<3); //Timer3停止计数
-		if(t3_flag)
+		//T4T3M &= ~(1<<3); //Timer3停止计数
+		TR1 = 0;
+		//if(t3_flag)
+		if(t1_flag)
 		{
-			t3_flag = 0;
+			//t3_flag = 0;
+			t1_flag = 0;
 			phase_time = 0x1fff;
 		}
 		else
 		{
-			phase_time = (((u16)T3H<<8)+(u16)T3L)>>1;
+			//phase_time = (((u16)T3H<<8)+(u16)T3L)>>1;
+			phase_time = (((u16)TH1<<8)+(u16)TL1)>>1;
 			phase_time &= 0x1ffff;
 		}
-		T3H = 0;
-		T3L = 0;
-		T4T3M |= (1<<3);
+		//T3H = 0;
+		//T3L = 0;
+		//T4T3M |= (1<<3);
+		TH1 = 0;
+		TL1 = 0;
+		TR1 = 1;
 		
 		phase_time_tmp[time_index] = phase_time;
 		if(++time_index >=8) time_index = 0;
@@ -59,12 +66,22 @@ void CMP_ISR(void) interrupt 21
 		if(phase_time > 40) phase_time -= 40;
 		else phase_time = 20;
 		
+		/*
 		T4T3M &= ~(1<<7);
 		phase_time = phase_time << 1;
 		phase_time = 0 - phase_time;
 		T4H = (u8)(phase_time >> 8);
 		T4L = (u8)phase_time;
 		T4T3M |= (1<<7);
+		demagnetizing_cnt = 1;
+		*/
+		
+		AUXR &= ~(0x10);;
+		phase_time = phase_time << 1;
+		phase_time = 0 - phase_time;
+		T2H = (u8)(phase_time >> 8);
+		T2L = (u8)phase_time;
+		AUXR |= 0x10; //Timer2开始计数
 		demagnetizing_cnt = 1;
 	}
 }

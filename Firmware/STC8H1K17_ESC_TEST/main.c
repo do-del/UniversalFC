@@ -47,17 +47,20 @@ void main(void)
 	
 	Port_Init();	//调用端口初始化函数
 	
+	
 	PWMA_Config();	//调用PWMA初始化函数
 	ADC_Config();	//调用ADC初始化函数
 	CMP_Config();	//调用模拟比较器初始化函数
 	Timer0_Config();	//调用定时器0初始化函数
-	Timer3_Config();	//调用定时器3初始化函数
-	Timer4_Config();	//调用定时器4初始化函数
+	Timer1_Config();
+	Timer2_Config();
+	//Timer3_Config();	//调用定时器3初始化函数
+	//Timer4_Config();	//调用定时器4初始化函数
 
 	PWMB_Config();
 	
-	Uart_Config();	//调用串口初始化函数
-	ES = 1;
+	//Uart_Config();	//调用串口初始化函数
+	//ES = 1;
 	
 	PWM_Set = 0;
 	PWM_Value = 0;
@@ -69,10 +72,11 @@ void main(void)
 	
 	EA = 1;	//打开总中断
 	
-	UartSendStr("--Brushless ESC Test--\r\n");
+	//UartSendStr("--Brushless ESC Test--\r\n");
 	
 	while(1)
 	{
+		
 		if(t0_flag)
 		{
 			t0_flag = 0;
@@ -152,6 +156,7 @@ void main(void)
 			}
 			
 		}
+		
 	}
 }
 

@@ -1,6 +1,7 @@
 #ifndef __UART_H
 #define __UART_H
 
+/*
 #define BRT (65536-(FOSC/115200+2)/4) //波特率转计数值
 #define RX_LEN 16 //串口接收数据缓存长度
 
@@ -23,6 +24,7 @@ void UartIsr() interrupt 4
 			wptr |= 0x80;
 	}
 }
+
 
 void Uart_Config(void)
 {
@@ -48,7 +50,7 @@ void UartSendStr(char *p)
 		UartSend(*p++);
 	}
 }
-
+*/
 /*
 void UartRxTest(void)
 {

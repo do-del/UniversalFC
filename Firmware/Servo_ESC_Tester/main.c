@@ -9,8 +9,10 @@
 #define WID_UP 2500
 #define WID_DOWN 500
 #define WID_DEFAULT WID_DOWN
-u8 count_tmp;
 u32 wid;
+bit en;
+
+u8 count_tmp;
 
 void main(void)
 {
@@ -31,14 +33,17 @@ void main(void)
 	PwmInit();
 	Int0_Init();
 	
-	wid = WID_DEFAULT;
 	OLED_Init();
 	OLED_Clear();
-	OLED_ShowString(8,0,"MODE:SERVO");
-	OLED_ShowString(8,2,"Freq(Hz):50");
-	OLED_ShowString(8,4,"Wid(us):      ");
-	OLED_ShowNum(79,4,wid,4,16);
-	OLED_ShowString(8,6,"Out: ON"); 
+	
+	wid = WID_DEFAULT;
+	en = 1;
+	
+	OLED_ShowString(25,0,"--TESTER--");
+	OLED_ShowString(8,2,"Freq(Hz):  50");
+	OLED_ShowString(8,4,"Wid(us) :    ");
+	OLED_ShowNum(80,4,wid,4,16);
+	OLED_ShowString(8,6,"Output  :  ON"); 
 	
 	EA = 1; //使能总中断
 	while(1)
@@ -53,9 +58,30 @@ void main(void)
 				wid -= 50;
 			if(wid > WID_UP) wid = WID_UP;
 			if(wid < WID_DOWN) wid = WID_DOWN;
-			OLED_ShowString(8,4,"Wid(us):      ");
-			OLED_ShowNum(79,4,wid,4,16);
+			OLED_ShowString(8,4,"Wid(us) :    ");
+			OLED_ShowNum(80,4,wid,4,16);
 			PwmSetHighUs(wid,wid,wid);
 		}
+		
+		if(!EC_KEY)
+		{
+			delay_ms(5);
+			if(!EC_KEY)
+			{
+				en = !en;
+				if(en)
+				{
+					OLED_ShowString(8,6,"Output  :  ON");
+					CR = 1;	//启动PCA计时器
+				}
+				else
+				{
+					OLED_ShowString(8,6,"Output  : OFF");
+					CR = 0;	//启动PCA计时器
+				}
+				while(!EC_KEY);
+			}
+		}
+		delay_ms(5);
 	}
 }
