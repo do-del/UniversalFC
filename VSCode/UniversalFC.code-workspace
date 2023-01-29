@@ -1,0 +1,32 @@
+{
+	"folders": [
+		{
+			"path": "../../../Project/Learning-Notes"
+		},
+		{
+			"path": "../../../copy/arduino-esp32-master"
+		},
+		{
+			"name": "ESP32_WIFI",
+			"path": "../../../Project/ESP32_WIFI"
+		},
+		{
+			"path": "../../../../STC/三相无刷电机驱动"
+		},
+		{
+			"path": "../Reference/test_mega32"
+		},
+		{
+			"name": "ESP_PWM_TEST",
+			"path": "../Firmware/ESP_PWM_TEST"
+		},
+		{
+			"path": "../../../copy/Peak-main/2.Firmware/littleVisual-ESP32-fw"
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"analog.h": "c"
+		}
+	}
+}
