@@ -1170,7 +1170,6 @@
     )
   )
 
-
   (junction (at 172.72 146.05) (diameter 0) (color 0 0 0 0)
     (uuid 0a31d184-179a-4181-983c-dbdea0083cd9)
   )
@@ -3010,12 +3009,12 @@
   )
 
   (symbol (lib_id "Regulator_Linear:LM78M05_TO252") (at 44.45 114.3 0) (unit 1)
-    (in_bom yes) (on_board yes) (fields_autoplaced)
+    (in_bom yes) (on_board yes)
     (uuid aa9085ff-e595-4ff7-981b-9067cf2a81b4)
     (property "Reference" "U1" (id 0) (at 44.45 106.68 0))
     (property "Value" "LM78M05_TO252" (id 1) (at 44.45 109.22 0))
-    (property "Footprint" "Package_TO_SOT_SMD:TO-252-2" (id 2) (at 44.45 108.585 0)
-      (effects (font (size 1.27 1.27) italic) hide)
+    (property "Footprint" "Package_TO_SOT_SMD:SOT-89-3" (id 2) (at 62.23 120.65 0)
+      (effects (font (size 1.27 1.27) italic))
     )
     (property "Datasheet" "https://www.onsemi.com/pub/Collateral/MC78M00-D.PDF" (id 3) (at 44.45 115.57 0)
       (effects (font (size 1.27 1.27)) hide)
@@ -3926,7 +3925,7 @@
       (reference "RV1") (unit 1) (value "20K") (footprint "Potentiometer_SMD:Potentiometer_Bourns_3314J_Vertical")
     )
     (path "/aa9085ff-e595-4ff7-981b-9067cf2a81b4"
-      (reference "U1") (unit 1) (value "LM78M05_TO252") (footprint "Package_TO_SOT_SMD:TO-252-2")
+      (reference "U1") (unit 1) (value "LM78M05_TO252") (footprint "Package_TO_SOT_SMD:SOT-89-3")
     )
     (path "/29023932-9eaf-407f-9d5c-ad492a2312e5"
       (reference "U2") (unit 1) (value "STC8H1K28_LQFP32") (footprint "Package_QFP:LQFP-32_7x7mm_P0.8mm")
